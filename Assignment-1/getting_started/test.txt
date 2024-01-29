@@ -1,1 +1,32 @@
-10+12*18
+public class test {
+    public static void main (String[] args) {
+        System.out.println(yo);
+
+        // this will do nothing
+        if(5 == 2) {
+            hello = true;
+        } else {
+            hello = false;
+        }
+
+        System.out.println(yabbo);
+    }
+}
+
+class math {
+    int f;
+    int g;
+
+    // return b
+    public int foobar(int a, int b) {
+        int c;
+        int k;
+        c = b;
+        f = g;
+        return c;
+    }
+
+    public int addNumbers(int a, int b) {
+        return a + b;
+    }
+}
