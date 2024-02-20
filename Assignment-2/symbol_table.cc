@@ -1,6 +1,4 @@
-#include "Node.h"
-#include "stdlib.h"
-#include <unordered_map>
+#include "symbol_table.h"
 
 class SymbolRecord {
 protected:
@@ -193,6 +191,7 @@ void traverseTree(Node* root, SymbolTable* sym_table) {
                     // Handle the main class
                     sym_table->put((*i)->value, new Class((*i)->value, (*i)->type));
                     sym_table->enterScope("Class: " + (*i)->value);
+                    sym_table->put("this", new Variable("this", (*i)->value));
                     traverseTree(*i, sym_table);
                     sym_table->exitScope();
                 } else if ((*i)->type == "ClassList") {
@@ -200,6 +199,7 @@ void traverseTree(Node* root, SymbolTable* sym_table) {
                     for (auto classNode = (*i)->children.begin(); classNode != (*i)->children.end(); ++classNode) {
                         sym_table->put((*classNode)->value, new Class((*classNode)->value, "Class"));
                         sym_table->enterScope("Class: " + (*classNode)->value);
+                        sym_table->put("this", new Variable("this", (*classNode)->value));
                         traverseTree(*classNode, sym_table);
                         sym_table->exitScope();
                     }
