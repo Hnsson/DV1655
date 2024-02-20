@@ -1,6 +1,8 @@
 #include <iostream>
 #include "parser.tab.hh"
-#include "symbol_table.cc"
+// #include "symbol_table.hh"
+#include "parsing_engine.hh"
+#include "error_codes.hh"
 
 extern Node *root;
 extern FILE *yyin;
@@ -8,15 +10,17 @@ extern int yylineno;
 extern int lexical_errors;
 extern yy::parser::symbol_type yylex();
 
-enum errCodes
-{
-	SUCCESS = 0,
-	LEXICAL_ERROR = 1,
-	SYNTAX_ERROR = 2,
-	AST_ERROR = 3,
-	SEMANTIC_ERROR = 4,
-	SEGMENTATION_FAULT = 139
-};
+
+// Moved this to seperate file `error_codes.hh` for the semantic analysis to also include as well as main file
+// enum errCodes
+// {
+// 	SUCCESS = 0,
+// 	LEXICAL_ERROR = 1,
+// 	SYNTAX_ERROR = 2,
+// 	AST_ERROR = 3,
+// 	SEMANTIC_ERROR = 4,
+// 	SEGMENTATION_FAULT = 139
+// };
 
 int errCode = errCodes::SUCCESS;
 
@@ -65,9 +69,14 @@ int main(int argc, char **argv)
 				root->print_tree();
 				root->generate_tree();
 
-				SymbolTable* sym_table = new SymbolTable();
-				traverseTree(root, sym_table);
+				// SymbolTable* sym_table = new SymbolTable();
+				symbol_table::SymbolTable* sym_table = new symbol_table::SymbolTable();
+				// traverseTree(root, sym_table);
+				symbol_table::traverseTree(root, sym_table);
+				// sym_table->printTable();
 				sym_table->printTable();
+
+				errCode = semantic_analysis::traverseTreeSemantically(root, sym_table);
 			}
 			catch (...)
 			{
@@ -75,6 +84,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-
+	std::cout << "ERROR CODE: " << errCode << std::endl;
 	return errCode;
 }
