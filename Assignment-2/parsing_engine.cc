@@ -62,7 +62,8 @@ namespace symbol_table {
                 for(auto i = root->children.begin(); i != root->children.end(); ++i) {
                     if ((*i)->type == "Main Class") {
                         // Handle the main class
-                        sym_table->put((*i)->value, new Class((*i)->value, (*i)->type));
+                        // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
+                        sym_table->put((*i)->value, new Class((*i)->value, (*i)->value));
                         sym_table->enterScope("Class: " + (*i)->value);
                         sym_table->put("this", new Variable("this", (*i)->value));
                         traverseTree(*i, sym_table);
@@ -70,7 +71,8 @@ namespace symbol_table {
                     } else if ((*i)->type == "ClassList") {
                         // Traverse each class within the class list
                         for (auto classNode = (*i)->children.begin(); classNode != (*i)->children.end(); ++classNode) {
-                            sym_table->put((*classNode)->value, new Class((*classNode)->value, "Class"));
+                            // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
+                            sym_table->put((*classNode)->value, new Class((*classNode)->value, (*classNode)->value));
                             sym_table->enterScope("Class: " + (*classNode)->value);
                             sym_table->put("this", new Variable("this", (*classNode)->value));
                             traverseTree(*classNode, sym_table);

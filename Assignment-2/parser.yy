@@ -43,7 +43,7 @@ root:       goal {root = $1;};
 
 goal: mainClass END
       {
-        $$ = new Node("Program", "", yylineno);
+        $$ = new Node("Program", "Start", yylineno);
         $$->children.push_back($1);
         root = $$;
       }
