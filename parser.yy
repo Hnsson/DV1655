@@ -23,14 +23,17 @@
 %token END 0 "end of file"
 
 //definition of operator precedence. See https://www.gnu.org/software/bison/manual/bison.html#Precedence-Decl
-%left EQOP ANDOP OROP
+%left OROP
+%left ANDOP
+%left EQOP
 %left LTOP GTOP
 %left PLUSOP MINUSOP
 %left MULTOP DIVOP
 %left LBRACKET RBRACKET DOT LENGTH
 %left NOTOP
-%nonassoc RP
-%nonassoc ELSE
+%left RP
+%left ELSE
+
 
 // definition of the production rules. All production rules are of type Node
 %type <Node *> root goal mainClass classDeclaration methodContentItem classDeclaration_inf varDeclaration varDeclaration_inf methodDeclaration methodDeclaration_inf methodContent methodContentParam methodHeader methodParam expression expression_inf factor statement statement_inf identifier type
@@ -40,12 +43,14 @@ root:       goal {root = $1;};
 
 goal: mainClass END
       {
-        $$ = $1;
+        $$ = new Node("Program", "Start", yylineno);
+        $$->children.push_back($1);
         root = $$;
       }
     | mainClass classDeclaration_inf END
       {
-        $$ = $1;
+        $$ = new Node("Program", "", yylineno);
+        $$->children.push_back($1);
         $$->children.push_back($2);
         root = $$;
       }
@@ -53,23 +58,13 @@ goal: mainClass END
 
 mainClass: PUBLIC CLASS identifier LBRACE PUBLIC STATIC VOID MAIN LP STRINGDEC LBRACKET RBRACKET identifier RP LBRACE statement_inf RBRACE RBRACE
             {
-              $$ = new Node("Main Class", "", yylineno);
-              $$->children.push_back($3);
+              $$ = new Node("Main Class", $3->value, yylineno);
+              // $$->children.push_back($3);
               $$->children.push_back($13);
               $$->children.push_back($16);
             }
          ;
 
-/*
-classDeclaration_inf: classDeclaration {$$ = $1;}
-                    | classDeclaration classDeclaration_inf
-                    {
-                        $$ = new Node("Class list", "", yylineno);
-                        $$->children.push_back($1);
-                        $$->children.push_back($2);
-                      }
-                    ;
-*/
 classDeclaration_inf: classDeclaration
                       {
                         $$ = new Node("ClassList", "", yylineno);
@@ -93,36 +88,27 @@ classDeclaration: CLASS identifier LBRACE RBRACE
                 | CLASS identifier LBRACE methodDeclaration_inf RBRACE
                   {
                     /* case with 0 1-inf cases */
-                    $$ = new Node("Class", "", yylineno);
-                    $$->children.push_back($2);
+                    $$ = new Node("Class", $2->value, yylineno);
+                    // $$->children.push_back($2);
                     $$->children.push_back($4);
                   }
                 | CLASS identifier LBRACE varDeclaration_inf RBRACE
                   {
                     /* case with 1-inf 0 cases */
-                    $$ = new Node("Class", "", yylineno);
-                    $$->children.push_back($2);
+                    $$ = new Node("Class", $2->value, yylineno);
+                    // $$->children.push_back($2);
                     $$->children.push_back($4);
                   }
                 | CLASS identifier LBRACE varDeclaration_inf methodDeclaration_inf RBRACE
                   {
                     /* case with 1-inf 1-inf cases */
-                    $$ = new Node("Class", "", yylineno);
-                    $$->children.push_back($2);
+                    $$ = new Node("Class", $2->value, yylineno);
+                    // $$->children.push_back($2);
                     $$->children.push_back($4);
                     $$->children.push_back($5);
                   }
                 ;
-/*
-varDeclaration_inf: varDeclaration {$$ = $1;}
-                  | varDeclaration varDeclaration_inf
-                    {
-                      $$ = new Node("Var declarations", "", yylineno);
-                      $$->children.push_back($1);
-                      $$->children.push_back($2);
-                    }
-                  ;
-*/
+
 varDeclaration_inf: varDeclaration
                     {
                       $$ = new Node("Var declarations", "", yylineno);
@@ -143,17 +129,6 @@ varDeclaration: type identifier SEMICOLON
                 }
               ;
 
-
-/*
-methodDeclaration_inf: methodDeclaration {$$ = $1;}
-                     | methodDeclaration methodDeclaration_inf
-                        {
-                          $$ = new Node("MethodDeclaration", "", yylineno);
-                          $$->children.push_back($1);
-                          $$->children.push_back($2);
-                        }
-                     ;
-*/
 methodDeclaration_inf: methodDeclaration
                         {
                           $$ = new Node("MethodDeclaration", "", yylineno);
@@ -170,34 +145,35 @@ methodDeclaration_inf: methodDeclaration
 methodDeclaration: PUBLIC type identifier LP RP methodContent
                     {
                       /* First case of ? where no input (no parameters) */
-                      $$ = new Node("Method", "", yylineno);
+                      $$ = new Node("Method", $3->value, yylineno);
                       $$->children.push_back($2);
-                      $$->children.push_back($3);
                       $$->children.push_back($6);
                     }
                  | PUBLIC type identifier LP methodHeader RP methodContent
                     {
                       /* Last case of certain input (parameters)*/
-                      $$ = new Node("Method", "", yylineno);
+                      $$ = new Node("Method", $3->value, yylineno);
                       $$->children.push_back($2);
-                      $$->children.push_back($3);
                       $$->children.push_back($5);
                       $$->children.push_back($7);
                     }
 
-
-methodHeader: methodParam { $$ = $1; /* Simply return method param */}
-               | methodParam COMMA methodHeader
+methodHeader: methodParam
+                {
+                  /*$$ = $1;  Simply return method param */
+                  $$ = new Node("Method parameters", "", yylineno);
+                  $$->children.push_back($1);
+                }
+               | methodHeader COMMA methodParam
                   {
-                    $$ = new Node("Method parameters", "", yylineno);
-                    $$->children.push_back($1);
+                    $$ = $1;
                     $$->children.push_back($3);
                   }
                ;
 
 methodParam: type identifier 
               {
-                $$ = new Node("Method parameter", "", yylineno);
+                $$ = new Node("Var declaration", "", yylineno);
                 $$->children.push_back($1);
                 $$->children.push_back($2);
               }
@@ -240,85 +216,36 @@ methodContentItem
       }
     | statement
       {
-        $$ = $1;
-      }
-    ;
-
-/* 
-methodContentParam: varDeclaration
-                      {
-                        $$ = $1;
-                      }
-                  | statement {$$ = $1;}
-                  | methodContentParam varDeclaration
-                    {
-                      $$ = $1;
-                      $$->children.push_back($2);
-                    }
-                  | methodContentParam statement
-                    {
-                      $$ = $1;
-                      $$->children.push_back($2);
-                    }
-                  ; */
-/*
-methodContentParam
-    : contentItem
-      {
-        $$ = new Node("MethodContents", "", yylineno);
+        $$ = new Node("Statement", "", yylineno);
         $$->children.push_back($1);
       }
-    | methodContentParam contentItem
-      {
-        $$ = $1;
-        $$->children.push_back($2);
-      }
     ;
-
-contentItem
-    : varDeclaration_inf
-      {
-        $$ = $1;
-      }
-    | statement_inf
-      {
-        $$ = $1;
-      }
-    ;
-*/
 
 type: INTDEC LBRACKET RBRACKET {$$ = new Node("IntArrayType", "int[]", yylineno);}
     | BOOL {$$ = new Node("BooleanType", "bool", yylineno);}
     | INTDEC {$$ = new Node("IntegerType", "int", yylineno);}
     | identifier {$$ = new Node("IdentifierType", "id", yylineno); $$->children.push_back($1);}
     ;
-
-
-// Newer, should put all statements under a node `Statements:`
-statement_inf: statement 
-               {
-                $$ = new Node("Statements", "", yylineno);
-                $$->children.push_back($1);
-               }
-             | statement_inf statement
-               {
-                  $$ = $1;
-                  $$->children.push_back($2);
-               }
-             ;
-/* Old
-statement_inf: statement 
-               {
-                $$ = $1;  //Simply return statement
-               }
-             | statement statement_inf  
+// even newer
+statement_inf: statement
                {
                   $$ = new Node("Statements", "", yylineno);
                   $$->children.push_back($1);
-                  $$->children.push_back($2);
+               }
+             | statement_inf statement
+               {
+                  if ($1->type == "Statements") {
+                    // Already a Statements node, just add the new statement
+                    $$ = $1;
+                    $$->children.push_back($2);
+                  } else {
+                    // Create a new Statements node and add both statements
+                    $$ = new Node("Statements", "", yylineno);
+                    $$->children.push_back($1);
+                    $$->children.push_back($2);
+                  }
                }
              ;
-*/
 
 statement: LBRACE RBRACE {$$ = new Node("Empty statement", "", yylineno);}
          | LBRACE statement_inf RBRACE {$$ = $2;}
@@ -471,7 +398,7 @@ expression: expression PLUSOP expression {      /*
             | factor      {$$ = $1; /* printf("r4 ");*/}
             ;
 
-identifier: ID            { $$ = new Node("Identifier: ", $1, yylineno);}
+identifier: ID            { $$ = new Node("Identifier", $1, yylineno);}
     ;
 
 factor:     INT           {  $$ = new Node("Int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}
