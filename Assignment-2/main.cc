@@ -76,7 +76,9 @@ int main(int argc, char **argv)
 				// sym_table->printTable();
 				sym_table->printTable();
 
-				errCode = semantic_analysis::traverseTreeSemantically(root, sym_table);
+				std::cout << "------------- SEMANTIC ANALYSIS -------------" << std::endl;
+
+				errCode = semantic_analysis::semantic_analysis(root, sym_table);
 			}
 			catch (...)
 			{
@@ -84,6 +86,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	std::cout << "ERROR CODE: " << errCode << std::endl;
+	std::cout << std::endl << "ERROR CODE: " << errCode << std::endl;
 	return errCode;
 }

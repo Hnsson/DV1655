@@ -227,7 +227,7 @@ type: INTDEC LBRACKET RBRACKET {$$ = new Node("IntArrayType", "int[]", yylineno)
     | identifier {$$ = new Node("IdentifierType", "id", yylineno); $$->children.push_back($1);}
     ;
 // even newer
-statement_inf: statement 
+statement_inf: statement
                {
                   $$ = new Node("Statements", "", yylineno);
                   $$->children.push_back($1);
@@ -398,7 +398,7 @@ expression: expression PLUSOP expression {      /*
             | factor      {$$ = $1; /* printf("r4 ");*/}
             ;
 
-identifier: ID            { $$ = new Node("Identifier: ", $1, yylineno);}
+identifier: ID            { $$ = new Node("Identifier", $1, yylineno);}
     ;
 
 factor:     INT           {  $$ = new Node("Int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}

@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include <unordered_map>
 #include "error_codes.hh"
+#include <stdexcept> // Include for std::runtime_error
 
 namespace symbol_table {
 
@@ -80,10 +81,7 @@ namespace symbol_table {
         vector<Scope*> childrenScopes;
         string scopeName;
         // Default constructor
-        Scope() {};
-        // "Copy" constructor
-        Scope(const Scope& other)
-            : parentScope(other.parentScope), scopeName(other.scopeName) {};
+        Scope() : parentScope(nullptr), next(0) {};
         // Needed input constructor
         Scope(Scope *parent, string name)
             : parentScope(parent), scopeName(name) {};
@@ -104,7 +102,17 @@ namespace symbol_table {
         }
 
         SymbolRecord* lookup(string key) {
-            return this->records.find(key) != this->records.end() ? this->records[key] : (this->parentScope ? this->parentScope->lookup(key) : NULL);
+            if (this->records.find(key) != this->records.end()) {
+                std::cout << key << " exists in records" << std::endl;
+                return this->records[key];
+            }
+            if(parentScope == NULL) {
+                std::cout << "parentScope is null" << std::endl;
+                return NULL;
+            }
+            std::cout << key << " exists in parentScope" << std::endl;
+            return parentScope->lookup(key);
+            // return this->records.find(key) != this->records.end() ? this->records[key] : (this->parentScope ? this->parentScope->lookup(key) : NULL);
         }
 
         void put(string key, SymbolRecord* record) {
@@ -153,5 +161,6 @@ namespace symbol_table {
 }
 
 namespace semantic_analysis {
-    errCodes traverseTreeSemantically(Node* node, symbol_table::SymbolTable* smy_table);
+    std::string traverseTreeSemantically(Node* node, symbol_table::SymbolTable* sym_table);
+    errCodes semantic_analysis(Node* node, symbol_table::SymbolTable* smy_table);
 }
