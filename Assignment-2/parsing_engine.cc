@@ -9,8 +9,8 @@ namespace symbol_table {
 
     SymbolTable::~SymbolTable() {};
 
-    void SymbolTable::enterScope(string name)  {
-        current = current->nextChild(name);
+    void SymbolTable::enterScope(string name, SymbolRecord* classContext = nullptr)  {
+        current = current->nextChild(name, classContext);
     }
 
     void SymbolTable::exitScope()  {
@@ -62,18 +62,25 @@ namespace symbol_table {
                         // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
                         Class* main_class = new Class((*i)->value, (*i)->value);
                         sym_table->put((*i)->value, main_class);
-                        sym_table->enterScope("Class: " + (*i)->value);
-                        sym_table->put("this", new Variable("this", (*i)->value));
-                        traverseTree(*i, sym_table);
+
+                        sym_table->enterScope("Class: " + (*i)->value, main_class);
+                            Variable* _this = new Variable("this", (*i)->value);
+                            // main_class->addVariable(_this);
+                            sym_table->put("this", _this);
+                            traverseTree(*i, sym_table);
                         sym_table->exitScope();
                     } else if ((*i)->type == "ClassList") {
                         // Traverse each class within the class list
                         for (auto classNode = (*i)->children.begin(); classNode != (*i)->children.end(); ++classNode) {
                             // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
-                            sym_table->put((*classNode)->value, new Class((*classNode)->value, (*classNode)->value));
-                            sym_table->enterScope("Class: " + (*classNode)->value);
-                            sym_table->put("this", new Variable("this", (*classNode)->value));
-                            traverseTree(*classNode, sym_table);
+                            Class* other_class = new Class((*classNode)->value, (*classNode)->value);
+                            sym_table->put((*classNode)->value, other_class);
+
+                            sym_table->enterScope("Class: " + (*classNode)->value, other_class);
+                                Variable* _this = new Variable("this", (*classNode)->value);
+                                // other_class->addVariable(_this);
+                                sym_table->put("this", _this);
+                                traverseTree(*classNode, sym_table);
                             sym_table->exitScope();
                         }
                     }
@@ -81,12 +88,15 @@ namespace symbol_table {
             }
         }
         if(root->type == "Main Class") {
-            sym_table->put("main", new Method("main", "void"));
-            sym_table->enterScope("Method: main");
-            // Assuming the first child of the main class is the parameter "String[] a"
-            if (!root->children.empty()) {
-                sym_table->put(root->children.front()->value, new Variable(root->children.front()->value, "String[]"));
-            }
+            Method* context = new Method("main", "void");
+            sym_table->put("main", context);
+            // ((Class*)sym_table->getCurrentScope()->scopeContext)->addMethod(context);
+            // Works with and without context below, heads up for future
+            sym_table->enterScope("Method: main", context);
+                // Assuming the first child of the main class is the parameter "String[] a"
+                Variable* args = new Variable(root->children.front()->value, "String[]");
+                // context->addParameter(args);
+                sym_table->put(root->children.front()->value, args);
             sym_table->exitScope();
         }
         if(root->type == "Class") {
@@ -99,7 +109,13 @@ namespace symbol_table {
         if(root->type == "Var declarations") {
             if(!root->children.empty()) {
                 for(auto i = root->children.begin(); i != root->children.end(); i++) {
-                    traverseTree(*i, sym_table);
+                    // Dont want to traverse because want to handle these `Var declarations`
+                    // differently due to being variables of a class instead of method
+                    // traverseTree(*i, sym_table);
+
+                    Variable* var_dec = new Variable((*i)->children.back()->value, (*i)->children.front()->value);
+                    sym_table->put((*i)->children.back()->value, var_dec);
+                    ((Class*)sym_table->getCurrentScope()->getScopeContext())->addVariable(var_dec);
                 }
             }
         }
@@ -107,10 +123,12 @@ namespace symbol_table {
             if(!root->children.empty()) {
                 for(auto i = root->children.begin(); i != root->children.end(); i++) {
                     Node* type = *(*i)->children.begin();
-                    sym_table->put((*i)->value, new Method((*i)->value, type->value));
+                    Method* context = new Method((*i)->value, type->value);
+                    sym_table->put((*i)->value, context);
+                    ((Class*)sym_table->getCurrentScope()->getScopeContext())->addMethod(context);
 
-                    sym_table->enterScope("Method: " + (*i)->value);
-                    traverseTree(*i, sym_table);
+                    sym_table->enterScope("Method: " + (*i)->value, context);
+                        traverseTree(*i, sym_table);
                     sym_table->exitScope();
                 }
             }
@@ -122,7 +140,13 @@ namespace symbol_table {
         }
         if(root->type == "Method parameters") {
             for (auto i = root->children.begin(); i != root->children.end(); i++) {
-                traverseTree(*i, sym_table);
+                // Dont want to traverse because want to handle these `Var declarations`
+                // differently due to being parameters instead of variables
+                // traverseTree(*i, sym_table);
+
+                Variable* var_dec = new Variable((*i)->children.back()->value, (*i)->children.front()->value);
+                sym_table->put((*i)->children.back()->value, var_dec);
+                ((Method*)sym_table->getCurrentScope()->getScopeContext())->addParameter(var_dec);
             }
         }
         if(root->type == "MethodContent") {
@@ -139,11 +163,13 @@ namespace symbol_table {
             // Add logic later
         }
         if(root->type == "Var declaration") {
-            sym_table->put(root->children.back()->value, new Variable(root->children.back()->value, root->children.front()->value));
+            // Add to variable
+            Variable* var_dec = new Variable(root->children.back()->value, root->children.front()->value);
+            sym_table->put(root->children.back()->value, var_dec);
+            ((Method*)sym_table->getCurrentScope()->getScopeContext())->addVariable(var_dec);
         }
     }
 }
-
 
 namespace semantic_analysis {
     std::string traverseTreeSemantically(Node* node, symbol_table::SymbolTable* sym_table) {
@@ -153,7 +179,6 @@ namespace semantic_analysis {
                 for(auto i = node->children.begin(); i != node->children.end(); ++i) {
                     if ((*i)->type == "Main Class") {
                         // Handle the main class
-                        // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
                         sym_table->enterScope("Class: " + (*i)->value);
                         traverseTreeSemantically(*i, sym_table);
                         sym_table->exitScope();
@@ -258,7 +283,11 @@ namespace semantic_analysis {
             }
         }
         if(node->type == "SysPrintLn") {
-            // Idk the rules here ¯\_(ツ)_/¯
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+
+            if (lhsType != "int") {
+                throw std::runtime_error("error: cannot convert '" + lhsType + "' to 'int' on line: " + std::to_string(node->lineno));
+            }
         }
         if(node->type == "Identifier assign") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
@@ -272,7 +301,6 @@ namespace semantic_analysis {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
             std::string posType = traverseTreeSemantically(*(++node->children.begin()), sym_table);
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
-
             // Check assignment position
             if(lhsType != "int[]") {
                 throw std::runtime_error("error: Expression must be of type int[] on line: " + std::to_string(node->lineno));
@@ -287,29 +315,174 @@ namespace semantic_analysis {
 
 
 
+        // Complex Operators
+        if(node->type == "LogicalAndExpression" || node->type == "LogicalOrExpression") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+            std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
+
+            if(lhsType != "boolean" || rhsType != "boolean") {
+                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'boolean', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+            }
+
+            return "Boolean";
+        }
+        if(node->type == "LesserThanExpression" || node->type == "GreaterThanExpression") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+            std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
+
+            if(lhsType != "int" || rhsType != "int") {
+                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+            }
+
+            return "Boolean";
+        }
+        // EqualExpression
+        if(node->type == "EqualExpression") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+            std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
+
+            if(lhsType != rhsType) {
+                throw std::runtime_error("error: Equal expression requires both operands to be of the same type, but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+            }
+
+            return "Boolean";
+        }
 
 
+        // Mathematical Operators
+        if(node->type == "AddExpression" || node->type == "SubExpression" || 
+        node->type == "MultExpression" || node->type == "DivExpression") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+            std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
-        // Lowest level components
+            // Both operands must be of type 'int'
+            if(lhsType != "int" || rhsType != "int") {
+                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+            }
+
+            return "int"; // The result of these operations is also an 'int'
+        }
+
+
+        // Programmer Operators
+        if (node->type == "Array access") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+            std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
+
+            if(lhsType != "int[]" || rhsType != "int") {
+                throw std::runtime_error("error: accessing array requires an array of type 'int[]', but found '" + lhsType + "' and a access position of type 'int' but found '" + rhsType + "' on line: " + std::to_string(node->lineno));
+            }
+
+            return "int";
+        }
+        if (node->type == "Expression" && node->value == "length") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+
+            if(lhsType != "int[]") {
+                throw std::runtime_error("error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
+            }
+
+            return "int";
+        }
+        if(node->type == "ExpressionCallMethod") {
+            // [X] - Check if using this as expression then you need to check if this is called from a class (lhs)
+            // [X] - Check if the identifier function exists in the expression above and has correct return type (mhs)
+            // [ ] - (IF EXISTS) Check if the number of arguments and argument types are correct to the function from mhs (rhs)
+            
+            // First step
+            std::string lhsName = traverseTreeSemantically(node->children.front(), sym_table);
+
+            // Second step
+            std::string mhsName = (*(++node->children.begin()))->value;
+            symbol_table::Method* _method = ((symbol_table::Class*)sym_table->findSymbol(lhsName))->lookupMethod(mhsName);
+            if(_method == NULL) {
+                throw std::runtime_error("error: Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
+            }
+
+            // Third step if exists
+            auto it = node->children.begin();
+            std::advance(it, 2);
+            if (it != node->children.end()) {
+                std::vector<Node*> parameters;
+                // Third child exists -> input parameters exists
+                std::cout << "Input parameters exists" << std::endl;
+                for (auto i = (*it)->children.begin(); i != (*it)->children.end(); i++) {
+                    parameters.push_back((*i));
+                }
+
+                // Check if number parameters is correct
+                if (parameters.size() != _method->getParamSize()) {
+                    throw std::runtime_error("error: Method '"+ mhsName + "' has (" + std::to_string(_method->getParamSize()) + ") parameter(s), (" + std::to_string(parameters.size()) + ") was given on line: " + std::to_string(node->lineno));
+                }
+                // Check if types are correct
+                std::vector<symbol_table::Variable*> _method_params = _method->getParams();
+                for (size_t i = 0; i < parameters.size(); i++) {
+                    // symbol_table::Variable* _method_param = _method->lookupParameter(param->value);
+                    if (parameters[i]->type != _method_params[i]->getType()) {
+                        throw std::runtime_error("error: expected parameter type (" + _method_params[i]->getType() + ") but (" + parameters[i]->type + ") was given on line: " + std::to_string(node->lineno));
+                    }
+                }
+            } else {
+                // Third child does NOT exists -> no input parameters
+                std::cout << "No input parameters" << std::endl;
+            }
+
+
+            std::cout << "NEW INSTANCE OF: " << lhsName << std::endl;
+            std::cout << "CALLING METHOD: " << mhsName << " WITH TYPE: " << _method->getType() << std::endl;
+            return _method->getType();
+        }
+
+
+        // Lowest level components / instanciators
         if(node->type == "Identifier" || node->type == "this") {
-            // Check if in scope
-
-
-            // Return type
-            std::cout << node->value << std::endl;
             auto identifier = sym_table->findSymbol(node->value);
 
             if (identifier == NULL) {
                 throw std::runtime_error("error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
             }
-            std::cout << "whut2" << std::endl;
-            // return identifier->getType();
+            return identifier->getType();
         }
-        if(node->type == "Int") {
+        if(node->type == "int") {
             return "int";
         }
-        if(node->type == "true" || node->type == "false") {
+        if(node->type == "Boolean") {
             return "boolean";
+        }
+        if(node->type == "this") {
+            auto _this = sym_table->findSymbol(node->value);
+
+            if (_this == NULL) {
+                throw std::runtime_error("error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
+            }
+            return _this->getType();
+        }
+        if(node->type == "NewArray" && node->value == "int") {
+            std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
+
+            if(lhsType != "int") {
+                throw std::runtime_error("error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
+            }
+
+            return "int[]";
+        }
+        if(node->type == "NewIstance") {
+            auto instance = sym_table->findSymbol(node->value);
+
+            if (instance == NULL) {
+                throw std::runtime_error("error: Instance of '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
+            }
+
+            return instance->getName();
+        }
+        if(node->type == "NotOperation") {
+            std::string type = traverseTreeSemantically(node->children.front(), sym_table);
+
+            if(type != "boolean") {
+                throw std::runtime_error("error: no known conversion for '" + type + "' to 'bool' on line: " + std::to_string(node->lineno));
+            }
+
+            return node->type;
         }
 
         return "success";
@@ -327,6 +500,8 @@ namespace semantic_analysis {
             // [ ] Array access: In b[a]; b.length the type of a must be integer; the type of b must
             //                   be int[];
             // [ ] Out of scope: Inheritance, polymorphic calls, and other OO features
+            std::cout << "yo" << std::endl;
+            sym_table->resetTable();
             std::cout << traverseTreeSemantically(node, sym_table) << std::endl;
             
             return errCodes::SUCCESS; // If no exceptions were thrown, analysis succeeded

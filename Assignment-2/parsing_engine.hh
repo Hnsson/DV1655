@@ -16,6 +16,7 @@ namespace symbol_table {
     public:
         SymbolRecord(string name, string type)
             : name(name), type(type) {}
+        virtual ~SymbolRecord() {}
 
         void setName(string name) { this->name = name; }
         string getName() { return this->name; }
@@ -37,14 +38,18 @@ namespace symbol_table {
 
     class Method : public SymbolRecord {
     private:     // Method-specific properties, e.g., parameters
-        unordered_map<string, Variable*> params;
+        // unordered_map<string, Variable*> params;
+        std::vector<Variable*> params;
         unordered_map<string, Variable*> vars;
     public:
         Method(string name, string returnType)
             : SymbolRecord(name, returnType) { this->sym_record = "Method"; }
 
         void addVariable(Variable* var) { this->vars[var->getName()] = var; }
-        void addParameter(Variable* var) { this->params[var->getName()] = var;}
+        void addParameter(Variable* var) { this->params.push_back(var);}
+
+        size_t getParamSize() { return this->params.size(); }
+        std::vector<Variable*> getParams() { return this->params; }
     };
 
 
@@ -55,7 +60,7 @@ namespace symbol_table {
     public:
         Class(string name, string type)
             : SymbolRecord(name, type) { this->sym_record = "Class";}
-        
+
         void addVariable(Variable* var) { this->vars[var->getName()] = var;}
         void addMethod(Method* method) { this->methods[method->getName()] = method;}
 
@@ -77,21 +82,25 @@ namespace symbol_table {
         int next = 0;
         Scope* parentScope;
         unordered_map<string, SymbolRecord*> records;
+        SymbolRecord* scopeContext = nullptr;
     public:
         vector<Scope*> childrenScopes;
         string scopeName;
+
         // Default constructor
         Scope() : parentScope(nullptr), next(0) {};
         // Needed input constructor
-        Scope(Scope *parent, string name)
-            : parentScope(parent), scopeName(name) {};
+        Scope(Scope *parent, string name, SymbolRecord* scopeContext = nullptr)
+            : parentScope(parent), scopeName(name), scopeContext(scopeContext) {};
         
         Scope* getParent() { return this->parentScope; };
 
-        Scope* nextChild(string name) {
+        SymbolRecord* getScopeContext() { return this->scopeContext; }
+
+        Scope* nextChild(string name, SymbolRecord* classContext) {
             Scope* nextChild;
             if (next == childrenScopes.size()) {
-                nextChild = new Scope(this, name);
+                nextChild = new Scope(this, name, classContext);
                 childrenScopes.push_back(nextChild);
             } else {
                 nextChild = childrenScopes.at(next);
@@ -143,8 +152,10 @@ namespace symbol_table {
         SymbolTable();
         ~SymbolTable();
 
-        void enterScope(string name);
+        void enterScope(string name, SymbolRecord* scopeContext);
         void exitScope();
+
+        Scope* getCurrentScope() { return this->current; };
 
         void put(string key, SymbolRecord* item);
 

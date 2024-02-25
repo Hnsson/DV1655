@@ -226,7 +226,7 @@ type: INTDEC LBRACKET RBRACKET {$$ = new Node("IntArrayType", "int[]", yylineno)
     | INTDEC {$$ = new Node("IntegerType", "int", yylineno);}
     | identifier {$$ = new Node("IdentifierType", "id", yylineno); $$->children.push_back($1);}
     ;
-// even newer
+
 statement_inf: statement
                {
                   $$ = new Node("Statements", "", yylineno);
@@ -288,13 +288,17 @@ statement: LBRACE RBRACE {$$ = new Node("Empty statement", "", yylineno);}
             }
          ;
 
-expression_inf: expression {$$ = $1; /* Simply return the expression */}
-    | expression COMMA expression_inf {
-        $$ = new Node("LIST", "params", yylineno);
-        $$->children.push_back($1);
-        $$->children.push_back($3);
-    }
-    ;
+expression_inf: expression 
+                  {
+                    $$ = new Node("Expressions", "", yylineno);
+                    $$->children.push_back($1);
+                  }
+              | expression_inf COMMA expression
+                  {
+                    $$ = $1;
+                    $$->children.push_back($3);
+                  }
+              ;
 
 expression: expression PLUSOP expression {      /*
                                                   Create a subtree that corresponds to the AddExpression
@@ -387,8 +391,7 @@ expression: expression PLUSOP expression {      /*
               }
             | NEW identifier LP RP
               {
-                $$ = new Node("NewIstance", "", yylineno);
-                $$->children.push_back($2);
+                $$ = new Node("NewIstance", $2->value, yylineno);
               }
             | NOTOP expression
               {
@@ -401,6 +404,6 @@ expression: expression PLUSOP expression {      /*
 identifier: ID            { $$ = new Node("Identifier", $1, yylineno);}
     ;
 
-factor:     INT           {  $$ = new Node("Int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}
+factor:     INT           {  $$ = new Node("int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}
             | LP expression RP { $$ = $2; /* printf("r6 ");  simply return the expression */}
     ;
