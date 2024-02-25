@@ -251,9 +251,9 @@ namespace semantic_analysis {
 
         if(node->type == "If-Expression-Statement") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
-
-            if (lhsType != "Boolean") {
-                throw std::runtime_error("error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
+            std::cout << "THE TYPE IS: " << lhsType << std::endl;
+            if (lhsType != "boolean") {
+                throw std::runtime_error("[0] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
             }
 
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -262,9 +262,9 @@ namespace semantic_analysis {
         }
         if(node->type == "If/Else-Expression-Statement") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
-
-            if (lhsType != "Boolean") {
-                throw std::runtime_error("error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
+            std::cout << "THE TYPE IS: " << lhsType << std::endl;
+            if (lhsType != "boolean") {
+                throw std::runtime_error("[1] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
             }
 
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -274,8 +274,8 @@ namespace semantic_analysis {
         if(node->type == "While-Statement") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
-            if (lhsType != "Boolean") {
-                throw std::runtime_error("error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
+            if (lhsType != "boolean") {
+                throw std::runtime_error("[2] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
             }
 
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -286,7 +286,7 @@ namespace semantic_analysis {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
             if (lhsType != "int") {
-                throw std::runtime_error("error: cannot convert '" + lhsType + "' to 'int' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[3] error: cannot convert '" + lhsType + "' to 'int' on line: " + std::to_string(node->lineno));
             }
         }
         if(node->type == "Identifier assign") {
@@ -294,7 +294,7 @@ namespace semantic_analysis {
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
             if (lhsType != rhsType) {
-                throw std::runtime_error("error: cannot convert '" + lhsType + "' to '" + rhsType + "' in assignment on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[4] error: cannot convert '" + lhsType + "' to '" + rhsType + "' in assignment on line: " + std::to_string(node->lineno));
             }
         }
         if(node->type == "ArrayPositionAssignOp") {
@@ -303,13 +303,13 @@ namespace semantic_analysis {
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
             // Check assignment position
             if(lhsType != "int[]") {
-                throw std::runtime_error("error: Expression must be of type int[] on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[5] error: Expression must be of type int[] on line: " + std::to_string(node->lineno));
             }
             if(posType != "int") {
-                throw std::runtime_error("error: Cannot convert assignment position '" + posType + "' to int on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[6] error: Cannot convert assignment position '" + posType + "' to int on line: " + std::to_string(node->lineno));
             }
             if(rhsType != "int") {
-                throw std::runtime_error("error: Cannot convert assignment value '" + rhsType + "' to int on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[7] error: Cannot convert assignment value '" + rhsType + "' to int on line: " + std::to_string(node->lineno));
             }
         }
 
@@ -321,31 +321,32 @@ namespace semantic_analysis {
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
             if(lhsType != "boolean" || rhsType != "boolean") {
-                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'boolean', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[8] error: " + node->type + " requires both operands to be of type 'boolean', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
             }
 
-            return "Boolean";
+            return "boolean";
         }
         if(node->type == "LesserThanExpression" || node->type == "GreaterThanExpression") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
             if(lhsType != "int" || rhsType != "int") {
-                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[9] error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
             }
 
-            return "Boolean";
+            return "boolean";
         }
         // EqualExpression
         if(node->type == "EqualExpression") {
+            std::cout << "yo" << std::endl;
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
             if(lhsType != rhsType) {
-                throw std::runtime_error("error: Equal expression requires both operands to be of the same type, but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[10] error: Equal expression requires both operands to be of the same type, but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
             }
 
-            return "Boolean";
+            return "boolean";
         }
 
 
@@ -357,7 +358,7 @@ namespace semantic_analysis {
 
             // Both operands must be of type 'int'
             if(lhsType != "int" || rhsType != "int") {
-                throw std::runtime_error("error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[11] error: " + node->type + " requires both operands to be of type 'int', but found '" + lhsType + "' and '" + rhsType + "' on line: " + std::to_string(node->lineno));
             }
 
             return "int"; // The result of these operations is also an 'int'
@@ -370,7 +371,7 @@ namespace semantic_analysis {
             std::string rhsType = traverseTreeSemantically(node->children.back(), sym_table);
 
             if(lhsType != "int[]" || rhsType != "int") {
-                throw std::runtime_error("error: accessing array requires an array of type 'int[]', but found '" + lhsType + "' and a access position of type 'int' but found '" + rhsType + "' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[12] error: accessing array requires an array of type 'int[]', but found '" + lhsType + "' and a access position of type 'int' but found '" + rhsType + "' on line: " + std::to_string(node->lineno));
             }
 
             return "int";
@@ -379,7 +380,7 @@ namespace semantic_analysis {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
             if(lhsType != "int[]") {
-                throw std::runtime_error("error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[13] error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
             }
 
             return "int";
@@ -387,40 +388,45 @@ namespace semantic_analysis {
         if(node->type == "ExpressionCallMethod") {
             // [X] - Check if using this as expression then you need to check if this is called from a class (lhs)
             // [X] - Check if the identifier function exists in the expression above and has correct return type (mhs)
-            // [ ] - (IF EXISTS) Check if the number of arguments and argument types are correct to the function from mhs (rhs)
-            
+            // [X] - (IF EXISTS) Check if the number of arguments and argument types are correct to the function from mhs (rhs)
             // First step
             std::string lhsName = traverseTreeSemantically(node->children.front(), sym_table);
+
+            // Need to add more so that duplicate identifiers dont get found, because if we have a variable with same name
+            // As class in this scope, it will find it instead of the class.
 
             // Second step
             std::string mhsName = (*(++node->children.begin()))->value;
             symbol_table::Method* _method = ((symbol_table::Class*)sym_table->findSymbol(lhsName))->lookupMethod(mhsName);
             if(_method == NULL) {
-                throw std::runtime_error("error: Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[14] error: Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
             }
 
             // Third step if exists
             auto it = node->children.begin();
             std::advance(it, 2);
             if (it != node->children.end()) {
-                std::vector<Node*> parameters;
+                int n_input_params = 0;
                 // Third child exists -> input parameters exists
                 std::cout << "Input parameters exists" << std::endl;
                 for (auto i = (*it)->children.begin(); i != (*it)->children.end(); i++) {
-                    parameters.push_back((*i));
+                    n_input_params++;
                 }
 
                 // Check if number parameters is correct
-                if (parameters.size() != _method->getParamSize()) {
-                    throw std::runtime_error("error: Method '"+ mhsName + "' has (" + std::to_string(_method->getParamSize()) + ") parameter(s), (" + std::to_string(parameters.size()) + ") was given on line: " + std::to_string(node->lineno));
+                if (n_input_params != _method->getParamSize()) {
+                    throw std::runtime_error("[15] error: Method '"+ mhsName + "' has (" + std::to_string(_method->getParamSize()) + ") parameter(s), (" + std::to_string(n_input_params) + ") was given on line: " + std::to_string(node->lineno));
                 }
                 // Check if types are correct
                 std::vector<symbol_table::Variable*> _method_params = _method->getParams();
-                for (size_t i = 0; i < parameters.size(); i++) {
+                int j = 0;
+                for (auto i = (*it)->children.begin(); i != (*it)->children.end(); i++) {
                     // symbol_table::Variable* _method_param = _method->lookupParameter(param->value);
-                    if (parameters[i]->type != _method_params[i]->getType()) {
-                        throw std::runtime_error("error: expected parameter type (" + _method_params[i]->getType() + ") but (" + parameters[i]->type + ") was given on line: " + std::to_string(node->lineno));
+                    std::string lhsName = traverseTreeSemantically(*i, sym_table);
+                    if (lhsName != _method_params[j]->getType()) {
+                        throw std::runtime_error("[16] error: expected parameter type (" + _method_params[j]->getType() + ") but (" + lhsName + ") was given on line: " + std::to_string(node->lineno));
                     }
+                    j++;
                 }
             } else {
                 // Third child does NOT exists -> no input parameters
@@ -439,21 +445,21 @@ namespace semantic_analysis {
             auto identifier = sym_table->findSymbol(node->value);
 
             if (identifier == NULL) {
-                throw std::runtime_error("error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[17] error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
             }
             return identifier->getType();
         }
         if(node->type == "int") {
             return "int";
         }
-        if(node->type == "Boolean") {
+        if(node->type == "boolean") {
             return "boolean";
         }
         if(node->type == "this") {
             auto _this = sym_table->findSymbol(node->value);
 
             if (_this == NULL) {
-                throw std::runtime_error("error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[18] error: Identifier '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
             }
             return _this->getType();
         }
@@ -461,7 +467,7 @@ namespace semantic_analysis {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
             if(lhsType != "int") {
-                throw std::runtime_error("error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[19] error: length of expression requires expression of type 'int[]', but found '" + lhsType + " on line: " + std::to_string(node->lineno));
             }
 
             return "int[]";
@@ -470,22 +476,22 @@ namespace semantic_analysis {
             auto instance = sym_table->findSymbol(node->value);
 
             if (instance == NULL) {
-                throw std::runtime_error("error: Instance of '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[20] error: Instance of '" + node->value + "' is not defined on line: " + std::to_string(node->lineno));
             }
-
             return instance->getName();
         }
         if(node->type == "NotOperation") {
             std::string type = traverseTreeSemantically(node->children.front(), sym_table);
+            std::cout << "REEEEEE: " << type << std::endl;
 
             if(type != "boolean") {
-                throw std::runtime_error("error: no known conversion for '" + type + "' to 'bool' on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[21] error: no known conversion for '" + type + "' to 'bool' on line: " + std::to_string(node->lineno));
             }
 
-            return node->type;
+            return type;
         }
 
-        return "success";
+        return node->type;
     }
 
     errCodes semantic_analysis(Node* node, symbol_table::SymbolTable* sym_table) {

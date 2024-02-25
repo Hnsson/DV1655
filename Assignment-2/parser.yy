@@ -29,8 +29,8 @@
 %left LTOP GTOP
 %left PLUSOP MINUSOP
 %left MULTOP DIVOP
-%left LBRACKET RBRACKET DOT LENGTH
 %left NOTOP
+%left LBRACKET RBRACKET DOT LENGTH
 %left RP
 %left ELSE
 
@@ -222,9 +222,9 @@ methodContentItem
     ;
 
 type: INTDEC LBRACKET RBRACKET {$$ = new Node("IntArrayType", "int[]", yylineno);}
-    | BOOL {$$ = new Node("BooleanType", "bool", yylineno);}
+    | BOOL {$$ = new Node("BooleanType", "boolean", yylineno);}
     | INTDEC {$$ = new Node("IntegerType", "int", yylineno);}
-    | identifier {$$ = new Node("IdentifierType", "id", yylineno); $$->children.push_back($1);}
+    | identifier {$$ = new Node("IdentifierType", $1->value, yylineno); $$->children.push_back($1);}
     ;
 
 statement_inf: statement
@@ -380,10 +380,11 @@ expression: expression PLUSOP expression {      /*
                 $$->children.push_back($5);
               }
 
-            | TRUE {$$ = new Node("Boolean", "true", yylineno);}
-            | FALSE {$$ = new Node("Boolean", "false", yylineno);}
+            | TRUE {$$ = new Node("boolean", "true", yylineno);}
+            | FALSE {$$ = new Node("boolean", "false", yylineno);}
+            /* | BOOL {$$ = new Node("Boolean", yylineno);} */
             | identifier {$$ = $1;}
-            | THIS {$$ = new Node("this", "", yylineno);}
+            | THIS {$$ = new Node("this", "this", yylineno);}
             | NEW INTDEC LBRACKET expression RBRACKET
               {
                 $$ = new Node("NewArray", "int", yylineno);
