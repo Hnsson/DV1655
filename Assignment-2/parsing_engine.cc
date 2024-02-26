@@ -74,6 +74,8 @@ namespace symbol_table {
                         for (auto classNode = (*i)->children.begin(); classNode != (*i)->children.end(); ++classNode) {
                             // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
                             Class* other_class = new Class((*classNode)->value, (*classNode)->value);
+                            // Check if already defined.
+                            if (sym_table->findSymbol((*classNode)->value) != NULL) throw std::runtime_error("[S0] error: Class '" + (*classNode)->value + "' is already defined");
                             sym_table->put((*classNode)->value, other_class);
 
                             sym_table->enterScope("Class: " + (*classNode)->value, other_class);
@@ -114,6 +116,8 @@ namespace symbol_table {
                     // traverseTree(*i, sym_table);
 
                     Variable* var_dec = new Variable((*i)->children.back()->value, (*i)->children.front()->value);
+                    // if (sym_table->findSymbol((*i)->children.back()->value) != NULL) throw std::runtime_error("[S1] error: Variable '" + (*i)->children.back()->value + "' is already defined on line: " + std::to_string((*i)->lineno));
+                    if (((Class*)sym_table->getCurrentScope()->getScopeContext())->lookupVariable((*i)->children.back()->value) != NULL) throw std::runtime_error("[S1] error: Variable '" + (*i)->children.back()->value + "' is already defined on line: " + std::to_string((*i)->lineno));
                     sym_table->put((*i)->children.back()->value, var_dec);
                     ((Class*)sym_table->getCurrentScope()->getScopeContext())->addVariable(var_dec);
                 }
@@ -124,6 +128,8 @@ namespace symbol_table {
                 for(auto i = root->children.begin(); i != root->children.end(); i++) {
                     Node* type = *(*i)->children.begin();
                     Method* context = new Method((*i)->value, type->value);
+                    // if (sym_table->findSymbol((*i)->value) != NULL) throw std::runtime_error("[S2] error: Method '" + (*i)->value + "' is already defined");
+                    if (((Class*)sym_table->getCurrentScope()->getScopeContext())->lookupMethod((*i)->value) != NULL) throw std::runtime_error("[S2] error: Method '" + (*i)->value + "' is already defined on line: " + std::to_string((*i)->lineno));
                     sym_table->put((*i)->value, context);
                     ((Class*)sym_table->getCurrentScope()->getScopeContext())->addMethod(context);
 
@@ -142,10 +148,13 @@ namespace symbol_table {
             for (auto i = root->children.begin(); i != root->children.end(); i++) {
                 // Dont want to traverse because want to handle these `Var declarations`
                 // differently due to being parameters instead of variables
-                // traverseTree(*i, sym_table);
+                traverseTree(*i, sym_table);
+                Variable* var_dec = (Variable*)sym_table->findSymbol((*i)->children.back()->value);
 
-                Variable* var_dec = new Variable((*i)->children.back()->value, (*i)->children.front()->value);
-                sym_table->put((*i)->children.back()->value, var_dec);
+
+                // Variable* var_dec = new Variable((*i)->children.back()->value, (*i)->children.front()->value);
+                // if (sym_table->findSymbol((*i)->children.back()->value) != NULL) throw std::runtime_error("[S3] error: Method parameter '" + (*i)->children.back()->value + "' is already defined");
+                // sym_table->put((*i)->children.back()->value, var_dec);
                 ((Method*)sym_table->getCurrentScope()->getScopeContext())->addParameter(var_dec);
             }
         }
@@ -165,8 +174,23 @@ namespace symbol_table {
         if(root->type == "Var declaration") {
             // Add to variable
             Variable* var_dec = new Variable(root->children.back()->value, root->children.front()->value);
+            // if (sym_table->findSymbol(root->children.back()->value) != NULL) throw std::runtime_error("[S3] error: Variable '" + root->children.back()->value + "' is already defined on line: " + std::to_string(root->lineno));
+            if (((Method*)sym_table->getCurrentScope()->getScopeContext())->lookupVariable(root->children.back()->value) != NULL) throw std::runtime_error("[S4] error: Variable '" + root->children.back()->value + "' is already defined on line: " + std::to_string(root->children.back()->lineno));
             sym_table->put(root->children.back()->value, var_dec);
             ((Method*)sym_table->getCurrentScope()->getScopeContext())->addVariable(var_dec);
+        }
+    }
+
+
+    errCodes syntax_analysis(Node* root, SymbolTable* sym_table) {
+        try {
+            traverseTree(root, sym_table);
+
+            return errCodes::SUCCESS; // If no exceptions were thrown, analysis succeeded
+        } catch (const std::runtime_error& e) {
+
+            std::cerr << e.what() << std::endl;
+            return errCodes::SYNTAX_ERROR; // Return a semantic error code if an exception was caught
         }
     }
 }

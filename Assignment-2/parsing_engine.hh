@@ -48,6 +48,15 @@ namespace symbol_table {
         void addVariable(Variable* var) { this->vars[var->getName()] = var; }
         void addParameter(Variable* var) { this->params.push_back(var);}
 
+        Variable* lookupVariable(string name) {
+            if(this->vars.find(name) != this->vars.end()) return this->vars[name];
+
+            return NULL;
+        }
+        Variable* lookupParam(int i) {
+            return params.at(i);
+        }
+
         size_t getParamSize() { return this->params.size(); }
         std::vector<Variable*> getParams() { return this->params; }
     };
@@ -170,6 +179,7 @@ namespace symbol_table {
 
 
     void traverseTree(Node* root, SymbolTable* sym_table);
+    errCodes syntax_analysis(Node* root, SymbolTable* sym_table);
 }
 
 namespace semantic_analysis {

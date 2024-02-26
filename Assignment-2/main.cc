@@ -69,16 +69,17 @@ int main(int argc, char **argv)
 				root->print_tree();
 				root->generate_tree();
 
-				// SymbolTable* sym_table = new SymbolTable();
+				// Syntax Analysis + Duplicate Identifier
 				symbol_table::SymbolTable* sym_table = new symbol_table::SymbolTable();
-				// traverseTree(root, sym_table);
-				symbol_table::traverseTree(root, sym_table);
-				// sym_table->printTable();
+				errCode = symbol_table::syntax_analysis(root, sym_table);
+				if (errCode != errCodes::SUCCESS) throw errCode;
+
 				sym_table->printTable();
-
+				
+				// Semantic Analysis
 				std::cout << "------------- SEMANTIC ANALYSIS -------------" << std::endl;
-
 				errCode = semantic_analysis::semantic_analysis(root, sym_table);
+				if (errCode != errCodes::SUCCESS) throw errCode;
 			}
 			catch (...)
 			{
