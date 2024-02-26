@@ -156,6 +156,7 @@ namespace symbol_table {
         void exitScope();
 
         Scope* getCurrentScope() { return this->current; };
+        Scope* getRootScope() { return this->root; };
 
         void put(string key, SymbolRecord* item);
 

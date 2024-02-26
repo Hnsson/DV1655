@@ -179,14 +179,14 @@ namespace semantic_analysis {
                 for(auto i = node->children.begin(); i != node->children.end(); ++i) {
                     if ((*i)->type == "Main Class") {
                         // Handle the main class
-                        sym_table->enterScope("Class: " + (*i)->value);
+                        sym_table->enterScope("", NULL);
                         traverseTreeSemantically(*i, sym_table);
                         sym_table->exitScope();
                     } else if ((*i)->type == "ClassList") {
                         // Traverse each class within the class list
                         for (auto classNode = (*i)->children.begin(); classNode != (*i)->children.end(); ++classNode) {
                             // Added (*classNode)->value as type instead of (*i)->type. Seems its more correct
-                            sym_table->enterScope("Class: " + (*classNode)->value);
+                            sym_table->enterScope("", NULL);
                             traverseTreeSemantically(*classNode, sym_table);
                             sym_table->exitScope();
                         }
@@ -195,7 +195,7 @@ namespace semantic_analysis {
             }
         }
         if(node->type == "Main Class") {
-            sym_table->enterScope("Method: main");
+            sym_table->enterScope("", NULL);
             for(auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeSemantically(*i, sym_table);
             }
@@ -213,7 +213,7 @@ namespace semantic_analysis {
                 for(auto i = node->children.begin(); i != node->children.end(); i++) {
                     Node* type = *(*i)->children.begin();
 
-                    sym_table->enterScope("Method: " + (*i)->value);
+                    sym_table->enterScope("", NULL);
                     traverseTreeSemantically(*i, sym_table);
                     sym_table->exitScope();
                 }
@@ -223,6 +223,7 @@ namespace semantic_analysis {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeSemantically(*i, sym_table);
             }
+            // Add to get return identifier and check if same type as this node
         }
         if(node->type == "MethodContent") {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -250,36 +251,36 @@ namespace semantic_analysis {
         // Will first perform on statements
 
         if(node->type == "If-Expression-Statement") {
+            for (auto i = node->children.begin(); i != node->children.end(); i++) {
+                traverseTreeSemantically(*i, sym_table);
+            }
+
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
             std::cout << "THE TYPE IS: " << lhsType << std::endl;
             if (lhsType != "boolean") {
                 throw std::runtime_error("[0] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
             }
-
+        }
+        if(node->type == "If/Else-Expression-Statement") {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeSemantically(*i, sym_table);
             }
-        }
-        if(node->type == "If/Else-Expression-Statement") {
+
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
             std::cout << "THE TYPE IS: " << lhsType << std::endl;
             if (lhsType != "boolean") {
                 throw std::runtime_error("[1] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
             }
-
+        }
+        if(node->type == "While-Statement") {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeSemantically(*i, sym_table);
             }
-        }
-        if(node->type == "While-Statement") {
+
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
             if (lhsType != "boolean") {
                 throw std::runtime_error("[2] error: cannot convert '" + lhsType + "' to 'boolean' on line: " + std::to_string(node->lineno));
-            }
-
-            for (auto i = node->children.begin(); i != node->children.end(); i++) {
-                traverseTreeSemantically(*i, sym_table);
             }
         }
         if(node->type == "SysPrintLn") {
@@ -392,14 +393,17 @@ namespace semantic_analysis {
             // First step
             std::string lhsName = traverseTreeSemantically(node->children.front(), sym_table);
 
-            // Need to add more so that duplicate identifiers dont get found, because if we have a variable with same name
-            // As class in this scope, it will find it instead of the class.
+            // Because the left hand side is always a class instance, look at the root for classes with that name
+            auto lhs_class = (symbol_table::Class*)sym_table->getRootScope()->lookup(lhsName);
+            if (lhs_class == NULL) throw std::runtime_error("[14.1] error: Instance of '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
+
 
             // Second step
             std::string mhsName = (*(++node->children.begin()))->value;
-            symbol_table::Method* _method = ((symbol_table::Class*)sym_table->findSymbol(lhsName))->lookupMethod(mhsName);
+            // symbol_table::Method* _method = ((symbol_table::Class*)sym_table->findSymbol(lhsName))->lookupMethod(mhsName);
+            symbol_table::Method* _method = lhs_class->lookupMethod(mhsName);
             if(_method == NULL) {
-                throw std::runtime_error("[14] error: Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
+                throw std::runtime_error("[14.2] error: Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined on line: " + std::to_string(node->lineno));
             }
 
             // Third step if exists
