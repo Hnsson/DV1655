@@ -49,12 +49,27 @@ goal: mainClass END
       }
     | mainClass classDeclaration_inf END
       {
-        $$ = new Node("Program", "", yylineno);
-        $$->children.push_back($1);
-        $$->children.push_back($2);
+        $$ = $2;
+        $$->children.push_front($1);
+        // $$ = new Node("Program", "", yylineno);
+        // $$->children.push_back($1);
+        // $$->children.push_back($2);
         root = $$;
       }
     ;
+
+
+classDeclaration_inf: classDeclaration
+                      {
+                        $$ = new Node("Program", "Start", yylineno);
+                        $$->children.push_back($1);
+                      }
+                    | classDeclaration_inf classDeclaration
+                      {
+                        $$ = $1;
+                        $$->children.push_back($2);
+                      }
+                    ;
 
 mainClass: PUBLIC CLASS identifier LBRACE PUBLIC STATIC VOID MAIN LP STRINGDEC LBRACKET RBRACKET identifier RP LBRACE statement_inf RBRACE RBRACE
             {
@@ -64,18 +79,6 @@ mainClass: PUBLIC CLASS identifier LBRACE PUBLIC STATIC VOID MAIN LP STRINGDEC L
               $$->children.push_back($16);
             }
          ;
-
-classDeclaration_inf: classDeclaration
-                      {
-                        $$ = new Node("ClassList", "", yylineno);
-                        $$->children.push_back($1);
-                      }
-                    | classDeclaration_inf classDeclaration
-                      {
-                        $$ = $1;
-                        $$->children.push_back($2);
-                      }
-                    ;
 
 
 

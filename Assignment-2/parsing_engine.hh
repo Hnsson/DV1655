@@ -121,14 +121,14 @@ namespace symbol_table {
 
         SymbolRecord* lookup(string key) {
             if (this->records.find(key) != this->records.end()) {
-                std::cout << key << " exists in records" << std::endl;
+                // std::cout << key << " exists in records" << std::endl;
                 return this->records[key];
             }
             if(parentScope == NULL) {
-                std::cout << "parentScope is null" << std::endl;
+                // std::cout << "parentScope is null" << std::endl;
                 return NULL;
             }
-            std::cout << key << " exists in parentScope" << std::endl;
+            // std::cout << key << " exists in parentScope" << std::endl;
             return parentScope->lookup(key);
             // return this->records.find(key) != this->records.end() ? this->records[key] : (this->parentScope ? this->parentScope->lookup(key) : NULL);
         }
@@ -178,7 +178,7 @@ namespace symbol_table {
     };
 
 
-    void traverseTree(Node* root, SymbolTable* sym_table);
+    bool traverseTree(Node* root, SymbolTable* sym_table, bool& encounteredError);
     errCodes syntax_analysis(Node* root, SymbolTable* sym_table);
 }
 

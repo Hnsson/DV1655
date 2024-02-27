@@ -61,25 +61,27 @@ int main(int argc, char **argv)
 
 		if (parseSuccess && !lexical_errors)
 		{
-			printf("\nThe compiler successfuly generated a syntax tree for the given input! \n");
+			// printf("\nThe compiler successfuly generated a syntax tree for the given input! \n");
 
-			printf("\nPrint Tree:  \n");
+			// printf("\nPrint Tree:  \n");
 			try
 			{
-				root->print_tree();
+				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS;
+				// root->print_tree();
 				root->generate_tree();
 
 				// Syntax Analysis + Duplicate Identifier
 				symbol_table::SymbolTable* sym_table = new symbol_table::SymbolTable();
-				errCode = symbol_table::syntax_analysis(root, sym_table);
-				if (errCode != errCodes::SUCCESS) throw errCode;
+				errCode_1 = symbol_table::syntax_analysis(root, sym_table);
 
-				sym_table->printTable();
+				// sym_table->printTable(); 
 				
 				// Semantic Analysis
-				std::cout << "------------- SEMANTIC ANALYSIS -------------" << std::endl;
-				errCode = semantic_analysis::semantic_analysis(root, sym_table);
-				if (errCode != errCodes::SUCCESS) throw errCode;
+				errCode_2 = semantic_analysis::semantic_analysis(root, sym_table);
+
+				if (errCode_1 != errCodes::SUCCESS || errCode_2 != errCodes::SUCCESS) {
+					errCode = errCodes::SEMANTIC_ERROR;
+				}
 			}
 			catch (...)
 			{
