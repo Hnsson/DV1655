@@ -209,6 +209,25 @@ namespace semantic_analysis {
                 }
             }
         }
+        // ------------- MAYBE HAVE THIS IN THE SYMBOL TABLE TRAVERSAL ------------- //
+        if(node->type == "Var declarations") {
+            if(!node->children.empty()) {
+                for(auto i = node->children.begin(); i != node->children.end(); i++) {
+                    std::string varDec = traverseTreeSemantically((*i), sym_table);
+                    if(varDec != "int" && varDec != "int[]" && varDec != "boolean") {
+                        auto var_type = (symbol_table::Class*)sym_table->getRootScope()->lookup(varDec);
+ 
+                        if (var_type == NULL) {
+                            std::cerr << "[14.1] @error at line " + std::to_string(node->lineno) + ": Instance of '" + varDec + "' is not defined" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+        if(node->type == "Var declaration") {
+            return node->children.front()->value;
+        }
+        // -------------------------------------------------------------------------- //
         if(node->type == "MethodDeclaration") {
             if(!node->children.empty()) {
                 for(auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -413,7 +432,8 @@ namespace semantic_analysis {
             symbol_table::Method* _method = lhs_class->lookupMethod(mhsName);
             if(_method == NULL) {
                 std::cerr << "[14.2] @error at line " + std::to_string(node->lineno) + ": Method '"+ mhsName + "' of instance '" + lhsName + "' is not defined" << std::endl;
-                throw std::runtime_error("[SEGFAULT] error: Could not cast");
+                // throw std::runtime_error("[SEGFAULT] error: Could not cast");
+                return "undefined";
             }
 
             // Third step if exists
