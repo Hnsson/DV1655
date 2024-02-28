@@ -156,7 +156,7 @@ namespace symbol_table {
         }
         if(root->type == "Var declaration") {
             // Add to variable
-            Variable* var_dec = new Variable(root->children.back()->value, root->children.front()->value);
+            Variable* var_dec = new Variable(root->children.back()->value, root->children.front()->value, root->children.back()->lineno);
             // if (sym_table->findSymbol(root->children.back()->value) != NULL) throw std::runtime_error("[S3] error: Variable '" + root->children.back()->value + "' is already defined on line: " + std::to_string(root->lineno));
             if (((Method*)sym_table->getCurrentScope()->getScopeContext())->lookupVariable(root->children.back()->value) != NULL)  { std::cerr << "[S4] @error at line " + std::to_string(root->children.back()->lineno) + ": Variable '" + root->children.back()->value + "' is already defined" << std::endl; encounteredError = true; }
             sym_table->put(root->children.back()->value, var_dec);
@@ -218,7 +218,7 @@ namespace semantic_analysis {
                         auto var_type = (symbol_table::Class*)sym_table->getRootScope()->lookup(varDec);
  
                         if (var_type == NULL) {
-                            std::cerr << "[14.1] @error at line " + std::to_string(node->lineno) + ": Instance of '" + varDec + "' is not defined" << std::endl;
+                            std::cerr << "[14.1] @error at line " + std::to_string((*i)->lineno) + ": Instance of '" + varDec + "' is not defined" << std::endl;
                         }
                     }
                 }
@@ -424,6 +424,7 @@ namespace semantic_analysis {
             if (lhs_class == NULL) {
                 std::cerr << "[14.1] @error at line " + std::to_string(node->lineno) + ": Instance of '" + lhsName + "' is not defined" << std::endl;
                 throw std::runtime_error("[SEGFAULT] error: Could not cast");
+                // PROBABLY JUST RETURN UNDEFINED LIKE BEFORE BECAUSE NO METHOD TYPE EXISTS THEN
             }
 
             // Second step
@@ -483,6 +484,16 @@ namespace semantic_analysis {
                 return "undefined";
                 // throw std::runtime_error("[SEGFAULT] error: Could not find identifier");
             }
+
+            if(identifier->getLineno() != -1) {
+                int declared_line = identifier->getLineno();
+                int used_line = node->lineno;
+                if (used_line < declared_line) {
+                    std::cerr << "[17] @error at line " + std::to_string(node->lineno) + ": Identifier '" + node->value + "' is not defined yet" << std::endl;
+                    return "undefined";
+                }
+            }
+
             return identifier->getType();
         }
         if(node->type == "int") {

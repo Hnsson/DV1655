@@ -13,9 +13,10 @@ namespace symbol_table {
         string name;
         string type; // For variable: int, int[], boolean, custom class types; For method: return type; For class: class name itself
         string sym_record; // "global" for class, class name for method, method name for variable
+        int lineno;
     public:
-        SymbolRecord(string name, string type)
-            : name(name), type(type) {}
+        SymbolRecord(string name, string type, int lineno = -1)
+            : name(name), type(type), lineno(lineno) {}
         virtual ~SymbolRecord() {}
 
         void setName(string name) { this->name = name; }
@@ -24,15 +25,18 @@ namespace symbol_table {
         void setType(string type) { this->type = type; }
         string getType() { return this->type; }
 
+        int getLineno() { return this->lineno; }
+
         string getRecord() { return "\tRecord: " + this->sym_record + "\tName: " + this->name + "\tType: " + this->type; }
     };
 
 
     class Variable : public SymbolRecord {
     public:
+
         // Additional properties specific to variables can be added here
-        Variable(string name, string type)
-            : SymbolRecord(name, type) { this->sym_record = "Variable"; }
+        Variable(string name, string type, int lineno = -1)
+            : SymbolRecord(name, type, lineno) { this->sym_record = "Variable"; this->lineno = lineno; }
     };
 
 
