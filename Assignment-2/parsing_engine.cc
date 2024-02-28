@@ -310,7 +310,7 @@ namespace semantic_analysis {
         if(node->type == "SysPrintLn") {
             std::string lhsType = traverseTreeSemantically(node->children.front(), sym_table);
 
-            if (lhsType != "int") {
+            if (lhsType != "int" && lhsType != "boolean") {
                 std::cerr << "[3] @error at line " + std::to_string(node->lineno) + ": cannot convert '" + lhsType + "' to 'int'" << std::endl;
             }
         }
@@ -423,8 +423,8 @@ namespace semantic_analysis {
             auto lhs_class = (symbol_table::Class*)sym_table->getRootScope()->lookup(lhsName);
             if (lhs_class == NULL) {
                 std::cerr << "[14.1] @error at line " + std::to_string(node->lineno) + ": Instance of '" + lhsName + "' is not defined" << std::endl;
-                throw std::runtime_error("[SEGFAULT] error: Could not cast");
-                // PROBABLY JUST RETURN UNDEFINED LIKE BEFORE BECAUSE NO METHOD TYPE EXISTS THEN
+                // throw std::runtime_error("[SEGFAULT] error: Could not cast");
+                return "undefined";
             }
 
             // Second step
@@ -465,7 +465,9 @@ namespace semantic_analysis {
                 }
             } else {
                 // Third child does NOT exists -> no input parameters
-                // std::cout << "No input parameters" << std::endl;
+                if(_method->getParamSize() > 0) {
+                    std::cerr << "[15] @error at line " + std::to_string(node->lineno) + ": Method '"+ mhsName + "' has (" + std::to_string(_method->getParamSize()) + ") parameter(s), (0) was given" << std::endl;
+                }
             }
 
 
@@ -516,7 +518,9 @@ namespace semantic_analysis {
 
             if (instance == NULL) {
                 std::cerr << "[20] @error at line " + std::to_string(node->lineno) + ": Instance of '" + node->value + "' is not defined" << std::endl;
+                return "undefined";
             }
+
             return instance->getName();
         }
         if(node->type == "NotOperation") {
