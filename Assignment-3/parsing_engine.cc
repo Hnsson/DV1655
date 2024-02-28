@@ -492,9 +492,6 @@ namespace semantic_analysis {
                 }
             }
 
-
-            // std::cout << "NEW INSTANCE OF: " << lhsName << std::endl;
-            // std::cout << "CALLING METHOD: " << mhsName << " WITH TYPE: " << _method->getType() << std::endl;
             return _method->getType();
         }
 
@@ -511,6 +508,10 @@ namespace semantic_analysis {
                 // throw std::runtime_error("[SEGFAULT] error: Could not find identifier");
             }
 
+            // [OPTIONAL] Different method which I am certain will work is upon var declaration in semantic we set the record's new
+            //            isDefined to true (which is false be default) and in this have error guard for check if node type is not 'this' and
+            //            and not defined, then just throw error
+            //
             // Check if the identifier has a line attached to it
             if(identifier->getLineno() != -1) {
                 // Then check if the declared line is before the used line in the code
