@@ -30,7 +30,7 @@ public:
 		(*i)->print_tree(depth+1);
 	}
 
-	void generate_tree() {
+	void generate_tree(bool print) {
 		std::ofstream outStream;
 		char* filename = "tree.dot";
 	  	outStream.open(filename);
@@ -41,7 +41,7 @@ public:
 		outStream << "}" << std::endl;
 		outStream.close();
 
-		printf("\nBuilt a parse-tree at %s. Use 'make tree' to generate the pdf version.\n", filename);
+		if (print) printf("\nBuilt a parse-tree at %s. Use 'make tree' to generate the pdf version.\n", filename);
   	}
 
   	void generate_tree_content(int &count, ofstream *outStream) {

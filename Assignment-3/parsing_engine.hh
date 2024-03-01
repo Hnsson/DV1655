@@ -57,9 +57,10 @@ namespace symbol_table {
 
             return NULL;
         }
-        Variable* lookupParam(int i) {
-            return params.at(i);
-        }
+        // Dont use function below:
+        // Variable* lookupParam(int i) {
+        //     return params.at(i);
+        // }
 
         size_t getParamSize() { return this->params.size(); }
         std::vector<Variable*> getParams() { return this->params; }

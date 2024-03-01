@@ -3,6 +3,7 @@
 // #include "symbol_table.hh"
 #include "parsing_engine.hh"
 #include "error_codes.hh"
+#include "cfg.hh"
 
 extern Node *root;
 extern FILE *yyin;
@@ -52,23 +53,29 @@ int main(int argc, char **argv)
 		yylex();
 	else
 	{
+		std::cout << "---------------- COMPILER FRONT END ----------------" << std::endl;
 		yy::parser parser;
 
 		bool parseSuccess = !parser.parse();
 
-		if (lexical_errors)
+		if (lexical_errors) {
 			errCode = errCodes::LEXICAL_ERROR;
+			std::cout << "- LEXER FAILED\t\t❌" << std::endl;
+		}
+		else std::cout << "- LEXER SUCCEEDED\t\t✅" << std::endl;
 
 		if (parseSuccess && !lexical_errors)
 		{
+			std::cout << "- PARSER SUCCEEDED\t\t✅" << std::endl;
 			// printf("\nThe compiler successfuly generated a syntax tree for the given input! \n");
 
 			// printf("\nPrint Tree:  \n");
 			try
 			{
+				
 				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS;
 				// root->print_tree();
-				root->generate_tree();
+				root->generate_tree(false);
 
 				// Syntax Analysis + Duplicate Identifier
 				symbol_table::SymbolTable* sym_table = new symbol_table::SymbolTable();
@@ -81,18 +88,27 @@ int main(int argc, char **argv)
 
 				if (errCode_1 != errCodes::SUCCESS || errCode_2 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEMANTIC_ERROR);
 
+				std::cout << "- SEMANTIC ANALYZER SUCCEEDED\t✅" << std::endl;
 				// At this point, it is presumed that the provided source code is lexically, syntactically and semantically correct.
-				// std::cout << "YOOOOO CUTIE" << std::endl;
+
+				
+				std::cout << intermediate_representation::traverseTreeIR(root, sym_table) << std::endl;
 			}
 			catch (ErrorCodeException& e) {
 				errCode = e.errorCode;
+				std::cout << "- SEMANTIC ANALYZER FAILED\t\t❌" << std::endl;
 			}
 			catch (...)
 			{
 				errCode = errCodes::AST_ERROR;
+				std::cout << "- SEMANTIC ANALYZER FAILED\t\t❌" << std::endl;
 			}
+		} else {
+			std::cout << "- PARSER FAILED\t\t❌" << std::endl;
 		}
 	}
+
 	std::cout << "ERROR CODE: " << errCode << std::endl;
+	std::cout << "----------------------------------------------------" << std::endl;
 	return errCode;
 }
