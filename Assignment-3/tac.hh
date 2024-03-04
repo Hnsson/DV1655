@@ -14,7 +14,8 @@ class Tac {
         virtual void dump() = 0; 
 };
 
-class Expression : Tac {
+class Expression : public Tac {
+public:
     Expression(std::string _op, std::string _y, std::string _z, std::string _result)
         : Tac(_op, _y, _z, _result) {}
     
@@ -23,16 +24,18 @@ class Expression : Tac {
     }
 };
 
-class MethodCall : Tac {
+class MethodCall : public Tac {
+public:
     MethodCall(std::string _f, std::string _N, std::string _result)
         : Tac("call", _f, _N, _result) {}
 
     void dump() override {
-        printf("%s := %s %s, %s", result.c_str(), lhs.c_str(), op.c_str(), rhs.c_str());
+        printf("%s := %s %s, %s", result.c_str(), op.c_str(), lhs.c_str(), rhs.c_str());
     }
 };
 
-class Jump : Tac {
+class Jump : public Tac {
+public:
     Jump(std::string _label)
         : Tac("goto", "", "", _label) {}
     
@@ -41,7 +44,8 @@ class Jump : Tac {
     }
 };
 
-class CondJump : Tac {
+class CondJump : public Tac {
+public:
     CondJump(std::string _op, std::string _x, std::string _label)
         : Tac(_op, _x, "", _label) {}
 
@@ -50,7 +54,8 @@ class CondJump : Tac {
     }
 };
 
-class ArrayAccess : Tac {
+class ArrayAccess : public Tac {
+public:
     ArrayAccess(std::string _array, std::string _index, std::string _result)
         : Tac("[]", _array, _index, _result) {}
     
@@ -59,7 +64,18 @@ class ArrayAccess : Tac {
     }
 };
 
-class LengthAccess : Tac {
+class ArrayAssign : public Tac {
+public:
+    ArrayAssign(std::string _array, std::string _index, std::string _result)
+        : Tac("[]", _array, _index, _result) {}
+    
+    void dump() override {
+        printf("%s[%s] := %s", lhs.c_str(), rhs.c_str(), result.c_str());
+    }
+};
+
+class LengthAccess : public Tac {
+public:
     LengthAccess(std::string _array, std::string _result)
         : Tac("length", _array, "", _result) {}
 
@@ -68,7 +84,8 @@ class LengthAccess : Tac {
     }
 };
 
-class Copy : Tac {
+class Copy : public Tac {
+public:
     Copy(std::string _y, std::string _result)
         : Tac("=", _y, "", _result) {}
 

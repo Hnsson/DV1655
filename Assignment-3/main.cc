@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 			try
 			{
 				
-				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS;
+				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS, errCode_3 = errCodes::SUCCESS;
 				// root->print_tree();
 				root->generate_tree(false);
 
@@ -86,17 +86,20 @@ int main(int argc, char **argv)
 				// Semantic Analysis
 				errCode_2 = semantic_analysis::semantic_analysis(root, sym_table);
 
-				if (errCode_1 != errCodes::SUCCESS || errCode_2 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEMANTIC_ERROR);
+				if (errCode_1 != errCodes::SUCCESS || errCode_2 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEMANTIC_ERROR, "SEMANTIC ANALYZER");
 
 				std::cout << "- SEMANTIC ANALYZER SUCCEEDED\t✅" << std::endl;
 				// At this point, it is presumed that the provided source code is lexically, syntactically and semantically correct.
 
-				
-				std::cout << intermediate_representation::traverseTreeIR(root, sym_table) << std::endl;
+				errCode_3 = intermediate_representation::generateIR(root, sym_table);
+
+				if (errCode_3 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEGMENTATION_FAULT, "IR GENERATION");
+
+				std::cout << "- IR GENERATION SUCCEEDED\t✅" << std::endl;
 			}
 			catch (ErrorCodeException& e) {
 				errCode = e.errorCode;
-				std::cout << "- SEMANTIC ANALYZER FAILED\t\t❌" << std::endl;
+				std::cout << "- " << e.name << " FAILED\t\t❌" << std::endl;
 			}
 			catch (...)
 			{

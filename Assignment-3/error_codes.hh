@@ -15,7 +15,8 @@ enum errCodes
 class ErrorCodeException : public std::runtime_error {
     public:
         int errorCode;
+        std::string name;
 
-        ErrorCodeException(int code)
-            :   std::runtime_error("An error occurred"), errorCode(code) {}
+        ErrorCodeException(int code, std::string name = "")
+            :   std::runtime_error("An error occurred"), errorCode(code), name(name) {}
 };

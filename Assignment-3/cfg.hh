@@ -5,7 +5,7 @@
 #include "parsing_engine.hh"
 #include <vector>
 
-namespace intermediate_representation {
+namespace {
     class BBlock {
         public:
             std::string name;
@@ -22,6 +22,14 @@ namespace intermediate_representation {
                 delete condition;
             }
     };
+}
 
-    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table);
+namespace intermediate_representation {
+    std::string generateTempId();
+    std::string generateBlockId();
+
+    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* current_block);
+
+    errCodes generateCFG(BBlock* start_block);
+    errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table);
 }
