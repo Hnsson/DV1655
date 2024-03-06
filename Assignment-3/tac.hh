@@ -24,6 +24,16 @@ public:
     }
 };
 
+class UnaryExpression : public Tac {
+public:
+    UnaryExpression(std::string _op, std::string _y, std::string _result)
+        : Tac(_op, _y, "", _result) {}
+    
+    void dump() override {
+        printf("%s := %s %s", result.c_str(), op.c_str(), lhs.c_str());
+    }
+};
+
 class MethodCall : public Tac {
 public:
     MethodCall(std::string _f, std::string _N, std::string _result)
@@ -46,8 +56,8 @@ public:
 
 class CondJump : public Tac {
 public:
-    CondJump(std::string _op, std::string _x, std::string _label)
-        : Tac(_op, _x, "", _label) {}
+    CondJump(std::string _x, std::string _label)
+        : Tac("iffalse", _x, "", _label) {}
 
     void dump() override {
         printf("%s %s goto %s", op.c_str(), result.c_str(), lhs.c_str());
@@ -91,6 +101,16 @@ public:
 
     void dump() override {
         printf("%s := %s", result.c_str(), lhs.c_str());
+    }
+};
+
+class Print : public Tac {
+public:
+    Print(std::string _y)
+        : Tac("", _y, "", "") {}
+
+    void dump() override {
+        printf("print: %s", lhs.c_str());
     }
 };
 
