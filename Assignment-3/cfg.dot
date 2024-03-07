@@ -1,0 +1,38 @@
+digraph CFG {
+    "SemanticMethodCallInBooleanExpression.Main" [shape=box label="SemanticMethodCallInBooleanExpression.Main\n
+a := Param\n_t0 := call A.a2, 0\nprint: _t0\n"];
+    "A.a1" [shape=box label="A.a1\n
+num := Param\n_t1 := call A.a3, 0\niffalse _t1 goto block_1"];
+    "A.a1" -> "block_0" [label="true"];
+    "block_0" [shape=box label="block_0\n
+num_aux := 1\ngoto block_2\n"];
+    "block_0" -> "block_2" [label="true"];
+    "block_2" [shape=box label="block_2\n
+return A\n"];
+    "A.a1" -> "block_1" [label="false"];
+    "block_1" [shape=box label="block_1\n
+_t2 := call A.a2, 0\n_t3 := _t2 < 1\ngoto block_2\niffalse _t3 goto block_4"];
+    "block_1" -> "block_2" [label="true"];
+    "block_1" -> "block_4" [label="false"];
+    "block_4" [shape=box label="block_4\n
+num_aux := 0\ngoto block_5\n"];
+    "block_4" -> "block_5" [label="true"];
+    "block_5" [shape=box label="block_5\n
+"];
+    "A.a2" [shape=box label="A.a2\n
+param 2\n_t6 := call A.a1, 1\n_t7 := call _t6.a4, 0\nparam _t7\n_t8 := call A.a1, 1\n_t9 := call _t8.a3, 0\nb := _t9\niffalse b goto block_7"];
+    "A.a2" -> "block_6" [label="true"];
+    "block_6" [shape=box label="block_6\n
+ret := 1\ngoto block_8\n"];
+    "block_6" -> "block_8" [label="true"];
+    "block_8" [shape=box label="block_8\n
+return ret\n"];
+    "A.a2" -> "block_7" [label="false"];
+    "block_7" [shape=box label="block_7\n
+ret := 0\ngoto block_8\n"];
+    "block_7" -> "block_8" [label="true"];
+    "A.a3" [shape=box label="A.a3\n
+return true\n"];
+    "A.a4" [shape=box label="A.a4\n
+return 1\n"];
+}
