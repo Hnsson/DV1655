@@ -12,6 +12,7 @@ class Tac {
         virtual ~Tac() {}
 
         virtual void dump() = 0; 
+        virtual std::string getDump() = 0;
 };
 
 class Expression : public Tac {
@@ -21,6 +22,9 @@ public:
     
     void dump() override {
         printf("%s := %s %s %s", result.c_str(), lhs.c_str(), op.c_str(), rhs.c_str());
+    }
+    std::string getDump() override {
+        return result + " := " + lhs + " " + op + " " + rhs;
     }
 };
 
@@ -32,6 +36,9 @@ public:
     void dump() override {
         printf("%s := %s %s", result.c_str(), op.c_str(), lhs.c_str());
     }
+    std::string getDump() override {
+        return result + " := " + op + " " + lhs;
+    }
 };
 
 class MethodCall : public Tac {
@@ -41,6 +48,9 @@ public:
 
     void dump() override {
         printf("%s := %s %s, %s", result.c_str(), op.c_str(), lhs.c_str(), rhs.c_str());
+    }
+    std::string getDump() override {
+        return result + " := " + op + " " + lhs + ", " + rhs;
     }
 };
 
@@ -52,6 +62,9 @@ public:
     void dump() override {
         printf("%s %s", op.c_str(), result.c_str());
     }
+    std::string getDump() override {
+        return op + " " + result;
+    }
 };
 
 class CondJump : public Tac {
@@ -61,6 +74,9 @@ public:
 
     void dump() override {
         printf("%s %s goto %s", op.c_str(), result.c_str(), lhs.c_str());
+    }
+    std::string getDump() override {
+        return op + " " + result + " goto " + lhs;
     }
 };
 
@@ -72,6 +88,9 @@ public:
     void dump() override {
         printf("%s := %s[%s]", result.c_str(), lhs.c_str(), rhs.c_str());
     }
+    std::string getDump() override {
+        return result + " := " + lhs + "[" + rhs + "]";
+    }
 };
 
 class ArrayAssign : public Tac {
@@ -81,6 +100,9 @@ public:
     
     void dump() override {
         printf("%s[%s] := %s", lhs.c_str(), rhs.c_str(), result.c_str());
+    }
+    std::string getDump() override {
+        return lhs + "[" + rhs + "] := " + result;
     }
 };
 
@@ -92,6 +114,9 @@ public:
     void dump() override {
         printf("%s := %s %s", result.c_str(), op.c_str(), lhs.c_str());
     }
+    std::string getDump() override {
+        return result + " := " + op + " " + lhs;
+    }
 };
 
 class Copy : public Tac {
@@ -101,6 +126,9 @@ public:
 
     void dump() override {
         printf("%s := %s", result.c_str(), lhs.c_str());
+    }
+    std::string getDump() override {
+        return result + " := " + lhs;
     }
 };
 
@@ -112,6 +140,9 @@ public:
     void dump() override {
         printf("print: %s", lhs.c_str());
     }
+    std::string getDump() override {
+        return "print: " + lhs;
+    }
 };
 
 class Parameter : public Tac {
@@ -121,6 +152,9 @@ public:
 
     void dump() override {
         printf("param %s", lhs.c_str());
+    }
+    std::string getDump() override {
+        return "param " + lhs;
     }
 };
 
@@ -132,6 +166,9 @@ public:
     void dump() override {
         printf("return %s", lhs.c_str());
     }
+    std::string getDump() override {
+        return "return " + lhs;
+    }
 };
 
 class NewObject : public Tac {
@@ -142,6 +179,9 @@ public:
     void dump() override {
         printf("%s := %s %s", result.c_str(), op.c_str(), lhs.c_str());
     }
+    std::string getDump() override {
+        return result + " := " + op + " " + lhs;
+    }
 };
 
 class NewArray : public Tac {
@@ -151,5 +191,8 @@ public:
 
     void dump() override {
         printf("%s := new %s, %s", result.c_str(), lhs.c_str(), rhs.c_str());
+    }
+    std::string getDump() override {
+        return result + " := new " + lhs + ", " + rhs;
     }
 };
