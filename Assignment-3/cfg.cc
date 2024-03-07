@@ -32,6 +32,10 @@ namespace intermediate_representation {
             BBlock* _main_method_block = new BBlock(_main_method_name);
             sym_table->enterScope("", NULL);
             current_block = _main_method_block;
+
+            // Tac* main_param = new Parameter(node->children.front()->value);
+            Tac* main_param = new Copy("Param", node->children.front()->value);
+            current_block->tacInstructions.push_back(main_param);
             for(auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeIR(*i, sym_table);
             }
@@ -54,7 +58,8 @@ namespace intermediate_representation {
             }
         }
         if(node->type == "Var declaration") {
-            return node->children.front()->value;
+            // Front for type, back for name
+            return node->children.back()->value;
         }
         if(node->type == "MethodDeclaration") {
             if(!node->children.empty()) {
@@ -75,8 +80,14 @@ namespace intermediate_representation {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeIR(*i, sym_table);
             }
-            
-            
+        }
+        if(node->type == "Method parameters") {
+            for (auto i = node->children.begin(); i != node->children.end(); i++) {
+                std::string param_name = traverseTreeIR(*i, sym_table);
+                // Tac* paramInstruction = new Parameter(param_name);
+                Tac* paramInstruction = new Copy("Param", param_name);
+                current_block->tacInstructions.push_back(paramInstruction);
+            }
         }
         if(node->type == "MethodContent") {
             for (auto i = node->children.begin(); i != node->children.end(); i++) {
@@ -164,11 +175,33 @@ namespace intermediate_representation {
             current_block = continue_block;
         }
         if(node->type == "While-Statement") {
-            for (auto i = node->children.begin(); i != node->children.end(); i++) {
-                traverseTreeIR(*i, sym_table);
-            }
+            std::string trueBlockName = generateBlockId();
+            BBlock* true_block = new BBlock(trueBlockName);
+            std::string continueBlockName = generateBlockId();
+            BBlock* continue_block = new BBlock(continueBlockName);
 
-            // std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
+
+            current_block->trueExit = true_block;
+            current_block->falseExit = continue_block;
+
+            auto it = node->children.begin();
+            std::string cond = traverseTreeIR(*it, sym_table);
+            Tac* conditionalInstruction = new CondJump(continueBlockName, cond);
+            current_block->condition = conditionalInstruction;
+
+            std::advance(it, 1);
+            current_block = true_block;
+            traverseTreeIR(*it, sym_table);
+
+            std::string temp_cond = generateTempId();
+            Tac* negate_cond = new UnaryExpression("!", cond, temp_cond);
+            sym_table->put(temp_cond, new symbol_table::Variable(temp_cond, "boolean"));
+            true_block->tacInstructions.push_back(negate_cond);
+
+            Tac* WhileConditionalInstruction = new CondJump(trueBlockName, temp_cond);
+            true_block->tacInstructions.push_back(WhileConditionalInstruction);
+
+            current_block = continue_block;
         }
         if(node->type == "SysPrintLn") {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
@@ -180,15 +213,19 @@ namespace intermediate_representation {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
             std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
 
-            // std::cout << lhsType << " := " << rhsType << std::endl;
+            std::cout << lhsType << " := " << rhsType << std::endl;
             Tac* copyInstruction = new Copy(rhsType, lhsType);
             current_block->tacInstructions.push_back(copyInstruction);
             return lhsType;
         }
         if(node->type == "ArrayPositionAssignOp") {
-            std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
-            std::string posType = traverseTreeIR(*(++node->children.begin()), sym_table);
-            std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
+            std::string lhsName = traverseTreeIR(node->children.front(), sym_table);
+            std::string posName = traverseTreeIR(*(++node->children.begin()), sym_table);
+            std::string rhsName = traverseTreeIR(node->children.back(), sym_table);
+
+            // ArrayAssign(std::string _array, std::string _index, std::string _result)
+            Tac* arrayAssignInstruction = new ArrayAssign(lhsName, posName, rhsName);
+            current_block->tacInstructions.push_back(arrayAssignInstruction);
         }
 
 
@@ -245,7 +282,13 @@ namespace intermediate_representation {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
             std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
 
-            return "int";
+            std::string name = generateTempId();
+            sym_table->put(name, new symbol_table::Variable(name, "int"));
+            // ArrayAccess(std::string _array, std::string _index, std::string _result)
+            Tac* arrayAccessInstruction = new ArrayAccess(lhsType, rhsType, name);
+            current_block->tacInstructions.push_back(arrayAccessInstruction);
+
+            return name;
         }
         if (node->type == "Expression" && node->value == "length") {
             // .length property for arrays
@@ -265,7 +308,8 @@ namespace intermediate_representation {
             // [X] - (IF EXISTS) Check if the number of arguments and argument types are correct to the function from mhs (rhs)
             // First step
             std::string lhsName = traverseTreeIR(node->children.front(), sym_table);
-            std::string className = sym_table->findSymbol(lhsName)->getType();
+            // std::string lhsName = node->children.front()->value;
+            // std::string className = sym_table->findSymbol(lhsName)->getType();
             // Second step
             std::string mhsName = (*(++node->children.begin()))->value;
             // Third step if exists, probably add a parameter stack and the returned value N is what the function should pop x amount of from param stack
@@ -275,6 +319,12 @@ namespace intermediate_representation {
             if (it != node->children.end()) {
                 _paramSize = (*it)->children.size();
                 // Add params ...
+                for (auto i = (*it)->children.begin(); i != (*it)->children.end(); i++) {
+                    // symbol_table::Variable* _method_param = _method->lookupParameter(param->value);
+                    std::string lhsName = traverseTreeIR(*i, sym_table);
+                    Tac* input_param = new Parameter(lhsName);
+                    current_block->tacInstructions.push_back(input_param);
+                }
             } else {
                 // Dont add params
             }
@@ -282,7 +332,7 @@ namespace intermediate_representation {
             std::string name = generateTempId();
             sym_table->put(name, new symbol_table::Variable(name, "method"));
             // Add the className somehow?
-            Tac* callMethodInstruction = new MethodCall(lhsName + ":" + mhsName, std::to_string(_paramSize), name);
+            Tac* callMethodInstruction = new MethodCall(lhsName + "." + mhsName, std::to_string(_paramSize), name);
             // callMethodInstruction->dump(); std::cout << std::endl;
             current_block->tacInstructions.push_back(callMethodInstruction);
 
@@ -325,28 +375,83 @@ namespace intermediate_representation {
         if(node->type == "NewIstance") {
             // auto instance = sym_table->findSymbol(node->value);
             std::string instance = node->value;
-            std::string name = generateTempId();
 
-            sym_table->put(name, new symbol_table::Variable(name, instance));
-            Tac* newObjectInstruction = new NewObject(instance, name);
-            current_block->tacInstructions.push_back(newObjectInstruction);
+            // ------ USE THESE IF YOU WANT TO CREATE TEMPORY VARIABLE WITH NEW INSTANCE ------
+            // std::string name = generateTempId();
 
-            return name;
+            // sym_table->put(name, new symbol_table::Variable(name, instance));
+            // Tac* newObjectInstruction = new NewObject(instance, name);
+            // current_block->tacInstructions.push_back(newObjectInstruction);
+
+            // return name;
+            // ---------------------------------------------------------------------------------
+            return instance;
         }
         if(node->type == "NotOperation") {
             std::string type = traverseTreeIR(node->children.front(), sym_table);
-            // std::string name = generateTempId();
+            std::string name = generateTempId();
 
-            // // Maybe add this `sym_table->findSymbol(type)->getType()` which results in std::string = "boolean"
-            // sym_table->put(name, new symbol_table::Variable(name, type));
-            // Tac* newUnaryExpressionInstruction = new UnaryExpression("!", name, type);
-            // current_block->tacInstructions.push_back(newUnaryExpressionInstruction);
+            // Maybe add this `sym_table->findSymbol(type)->getType()` which results in std::string = "boolean"
+            sym_table->put(name, new symbol_table::Variable(name, "boolean"));
+            Tac* newUnaryExpressionInstruction = new UnaryExpression("!", type, name);
+            current_block->tacInstructions.push_back(newUnaryExpressionInstruction);
 
-            return "!" + type;
+            return name;
+            // return "!" + type;
         }
 
         return node->type;
     }
+
+
+
+    void printCFG() {
+        ofstream outStream("cfg.dot");
+        if (!outStream.is_open()) {
+            cerr << "Error opening file cfg.dot" << endl;
+            return;
+        }
+
+        outStream << "digraph CFG {\n";
+        unordered_set<BBlock*> visited; // To keep track of visited blocks
+        for(BBlock* methodEntry : method_blocks){
+            generateCFGContent(methodEntry, outStream, visited);
+        }
+        outStream << "}\n";
+        outStream.close();
+
+        cout << "Built CFG at cfg.dot. Use 'dot -Tpdf cfg.dot -o cfg.pdf' to generate the PDF version." << endl;
+    }
+
+
+    void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited) {
+        if (block == nullptr || visited.find(block) != visited.end()) {
+            return; // Avoid printing the same block twice or null blocks
+        }
+
+        visited.insert(block); // Mark the current block as visited
+        outStream << "    \"" << block->name << "\" [shape=box label=\"" << block->name << "\\n\n";
+
+        for(Tac* instruction : block->tacInstructions) {
+            outStream << instruction->getDump();
+            outStream << "\\n";
+        }
+
+        if(block->condition) outStream << block->condition->getDump();
+
+        outStream << "\"];\n";
+
+        if (block->trueExit != nullptr) {
+            outStream << "    \"" << block->name << "\" -> \"" << block->trueExit->name << "\" [label=\"true\"];\n";
+            generateCFGContent(block->trueExit, outStream, visited);
+        }
+        if (block->falseExit != nullptr) {
+            outStream << "    \"" << block->name << "\" -> \"" << block->falseExit->name << "\" [label=\"false\"];\n";
+            generateCFGContent(block->falseExit, outStream, visited);
+        }
+    }
+
+
 
     void printBlocks(BBlock* block, const std::string& prefix = "") {
         if (!block) return; // Base case: if block is null, do nothing
@@ -378,6 +483,7 @@ namespace intermediate_representation {
     errCodes generateCFG() {
         std::cout << "- CFG CREATION PENDING" << "\t\t..." << std::endl;
 
+        // Print structure to console
         for (BBlock* method_block : method_blocks) {
             printBlocks(method_block);
             std::cout << std::endl;
@@ -398,6 +504,7 @@ namespace intermediate_representation {
             traverseTreeIR(root, sym_table);
 
             cfg_error = generateCFG();
+            printCFG();
 
             if (cfg_error != errCodes::SUCCESS) throw std::runtime_error("");
 
