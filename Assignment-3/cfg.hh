@@ -3,6 +3,7 @@
 #include "tac.hh"
 #include "Node.h"
 #include "parsing_engine.hh"
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -31,6 +32,9 @@ namespace intermediate_representation {
     std::string generateBlockId();
 
     std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* current_block);
+
+    void printCFG();
+    void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited);
 
     errCodes generateCFG();
     errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table);
