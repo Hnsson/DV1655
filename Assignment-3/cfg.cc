@@ -13,7 +13,12 @@ namespace intermediate_representation {
     }
 
 
-
+    bool isLastBlock(BBlock* block, BBlock* continueBlock) {
+        // A block is considered 'last' if its exits lead to a known continuation block or are null,
+        // indicating no further control structure processing within the current context.
+        return (!block->trueExit || block->trueExit == continueBlock) &&
+            (!block->falseExit || block->falseExit == continueBlock);
+    }
 
     std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table) {
         if(node->type == "Program") {
@@ -120,10 +125,9 @@ namespace intermediate_representation {
         if(node->type == "If-Expression-Statement") {
             std::string trueBlockName = generateBlockId();
             BBlock* true_block = new BBlock(trueBlockName);
+
             std::string continueBlockName = generateBlockId();
             BBlock* continue_block = new BBlock(continueBlockName);
-
-            Tac* uncondJump = new Jump(continueBlockName);
 
             current_block->trueExit = true_block;
             current_block->falseExit = continue_block;
@@ -132,12 +136,11 @@ namespace intermediate_representation {
             std::string cond = traverseTreeIR(*it, sym_table);
             Tac* conditionalInstruction = new CondJump(continueBlockName, cond);
             current_block->condition = conditionalInstruction;
-
+            
             std::advance(it, 1);
             current_block = true_block;
             traverseTreeIR(*it, sym_table);
-            // true_block->trueExit = continue_block;
-            true_block->tacInstructions.push_back(uncondJump);
+            current_block->trueExit = continue_block;
 
             current_block = continue_block;
         }
@@ -149,7 +152,6 @@ namespace intermediate_representation {
             std::string continueBlockName = generateBlockId();
             BBlock* continue_block = new BBlock(continueBlockName);
 
-            Tac* uncondJump = new Jump(continueBlockName);
 
             current_block->trueExit = true_block;
             current_block->falseExit = false_block;
@@ -162,44 +164,49 @@ namespace intermediate_representation {
             std::advance(it, 1);
             current_block = true_block;
             traverseTreeIR(*it, sym_table);
-            true_block->trueExit = continue_block;
-            true_block->tacInstructions.push_back(uncondJump);
+            current_block->trueExit = continue_block;
             
 
             std::advance(it, 1);
             current_block = false_block;
             traverseTreeIR(*it, sym_table);
-            false_block->trueExit = continue_block;
-            false_block->tacInstructions.push_back(uncondJump);
+            current_block->trueExit = continue_block;
 
             current_block = continue_block;
         }
         if(node->type == "While-Statement") {
+            std::string headerBlockName = generateBlockId();
+            BBlock* header_block = new BBlock(headerBlockName);
             std::string trueBlockName = generateBlockId();
             BBlock* true_block = new BBlock(trueBlockName);
             std::string continueBlockName = generateBlockId();
             BBlock* continue_block = new BBlock(continueBlockName);
 
 
-            current_block->trueExit = true_block;
-            current_block->falseExit = continue_block;
-
             auto it = node->children.begin();
             std::string cond = traverseTreeIR(*it, sym_table);
+            // Dont need, add this in generate
+            // Tac* jumpHeader = new Jump(headerBlockName);
+            // current_block->tacInstructions.push_back(jumpHeader);
+            current_block->trueExit = header_block;
+
+
+            std::string temp_cond = generateTempId();
             Tac* conditionalInstruction = new CondJump(continueBlockName, cond);
-            current_block->condition = conditionalInstruction;
+            header_block->condition = conditionalInstruction;
 
             std::advance(it, 1);
+            // Needed?
+            // true_block->condition = current_block->condition;
             current_block = true_block;
             traverseTreeIR(*it, sym_table);
 
-            std::string temp_cond = generateTempId();
-            Tac* negate_cond = new UnaryExpression("!", cond, temp_cond);
-            sym_table->put(temp_cond, new symbol_table::Variable(temp_cond, "boolean"));
-            true_block->tacInstructions.push_back(negate_cond);
+            // Dont because added in generate
+            // current_block->tacInstructions.push_back(jumpHeader);
+            current_block->trueExit = header_block;
 
-            Tac* WhileConditionalInstruction = new CondJump(trueBlockName, temp_cond);
-            true_block->tacInstructions.push_back(WhileConditionalInstruction);
+            header_block->trueExit = true_block;
+            header_block->falseExit = continue_block;
 
             current_block = continue_block;
         }
@@ -213,7 +220,7 @@ namespace intermediate_representation {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
             std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
 
-            std::cout << lhsType << " := " << rhsType << std::endl;
+            // std::cout << lhsType << " := " << rhsType << std::endl;
             Tac* copyInstruction = new Copy(rhsType, lhsType);
             current_block->tacInstructions.push_back(copyInstruction);
             return lhsType;
@@ -430,23 +437,29 @@ namespace intermediate_representation {
         }
 
         visited.insert(block); // Mark the current block as visited
-        outStream << "    \"" << block->name << "\" [shape=box label=\"" << block->name << "\\n\n";
+        outStream << "    \"" << block->name << "\" [shape=box label=\"" << block->name << "\\n";
 
         for(Tac* instruction : block->tacInstructions) {
             outStream << instruction->getDump();
             outStream << "\\n";
         }
 
-        if(block->condition) outStream << block->condition->getDump();
+        // Add condition after instructions
+        if(block->condition) outStream << "\\n" << block->condition->getDump();
+        // This will add a goto to every block if they have a trueExit, but if it has a condition, provide that first before this, which is the statement above
+        if (block->trueExit) {
+            Tac* jump = new Jump(block->trueExit->name);
+            outStream << "\\n" << jump->getDump();
+        }
 
         outStream << "\"];\n";
 
         if (block->trueExit != nullptr) {
-            outStream << "    \"" << block->name << "\" -> \"" << block->trueExit->name << "\" [label=\"true\"];\n";
+            outStream << "    \"" << block->name << "\" -> \"" << block->trueExit->name << "\" [label=\"true\" color=\"#7dff90\"];\n";
             generateCFGContent(block->trueExit, outStream, visited);
         }
         if (block->falseExit != nullptr) {
-            outStream << "    \"" << block->name << "\" -> \"" << block->falseExit->name << "\" [label=\"false\"];\n";
+            outStream << "    \"" << block->name << "\" -> \"" << block->falseExit->name << "\" [label=\"false\" color=\"#ff7d7d\"];\n";
             generateCFGContent(block->falseExit, outStream, visited);
         }
     }
@@ -503,7 +516,7 @@ namespace intermediate_representation {
             current_block = _top_block;
             traverseTreeIR(root, sym_table);
 
-            cfg_error = generateCFG();
+            // cfg_error = generateCFG();
             printCFG();
 
             if (cfg_error != errCodes::SUCCESS) throw std::runtime_error("");
