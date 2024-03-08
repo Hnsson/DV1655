@@ -29,8 +29,8 @@
 %left LTOP GTOP
 %left PLUSOP MINUSOP
 %left MULTOP DIVOP
-%left LBRACKET RBRACKET DOT LENGTH
 %left NOTOP
+%left LBRACKET RBRACKET DOT LENGTH
 %left RP
 %left ELSE
 
@@ -49,12 +49,27 @@ goal: mainClass END
       }
     | mainClass classDeclaration_inf END
       {
-        $$ = new Node("Program", "", yylineno);
-        $$->children.push_back($1);
-        $$->children.push_back($2);
+        $$ = $2;
+        $$->children.push_front($1);
+        // $$ = new Node("Program", "", yylineno);
+        // $$->children.push_back($1);
+        // $$->children.push_back($2);
         root = $$;
       }
     ;
+
+
+classDeclaration_inf: classDeclaration
+                      {
+                        $$ = new Node("Program", "Start", yylineno);
+                        $$->children.push_back($1);
+                      }
+                    | classDeclaration_inf classDeclaration
+                      {
+                        $$ = $1;
+                        $$->children.push_back($2);
+                      }
+                    ;
 
 mainClass: PUBLIC CLASS identifier LBRACE PUBLIC STATIC VOID MAIN LP STRINGDEC LBRACKET RBRACKET identifier RP LBRACE statement_inf RBRACE RBRACE
             {
@@ -64,18 +79,6 @@ mainClass: PUBLIC CLASS identifier LBRACE PUBLIC STATIC VOID MAIN LP STRINGDEC L
               $$->children.push_back($16);
             }
          ;
-
-classDeclaration_inf: classDeclaration
-                      {
-                        $$ = new Node("ClassList", "", yylineno);
-                        $$->children.push_back($1);
-                      }
-                    | classDeclaration_inf classDeclaration
-                      {
-                        $$ = $1;
-                        $$->children.push_back($2);
-                      }
-                    ;
 
 
 
@@ -222,11 +225,11 @@ methodContentItem
     ;
 
 type: INTDEC LBRACKET RBRACKET {$$ = new Node("IntArrayType", "int[]", yylineno);}
-    | BOOL {$$ = new Node("BooleanType", "bool", yylineno);}
+    | BOOL {$$ = new Node("BooleanType", "boolean", yylineno);}
     | INTDEC {$$ = new Node("IntegerType", "int", yylineno);}
-    | identifier {$$ = new Node("IdentifierType", "id", yylineno); $$->children.push_back($1);}
+    | identifier {$$ = new Node("IdentifierType", $1->value, yylineno);}
     ;
-// even newer
+
 statement_inf: statement
                {
                   $$ = new Node("Statements", "", yylineno);
@@ -288,13 +291,17 @@ statement: LBRACE RBRACE {$$ = new Node("Empty statement", "", yylineno);}
             }
          ;
 
-expression_inf: expression {$$ = $1; /* Simply return the expression */}
-    | expression COMMA expression_inf {
-        $$ = new Node("LIST", "params", yylineno);
-        $$->children.push_back($1);
-        $$->children.push_back($3);
-    }
-    ;
+expression_inf: expression 
+                  {
+                    $$ = new Node("Expressions", "", yylineno);
+                    $$->children.push_back($1);
+                  }
+              | expression_inf COMMA expression
+                  {
+                    $$ = $1;
+                    $$->children.push_back($3);
+                  }
+              ;
 
 expression: expression PLUSOP expression {      /*
                                                   Create a subtree that corresponds to the AddExpression
@@ -376,10 +383,11 @@ expression: expression PLUSOP expression {      /*
                 $$->children.push_back($5);
               }
 
-            | TRUE {$$ = new Node("Boolean", "true", yylineno);}
-            | FALSE {$$ = new Node("Boolean", "false", yylineno);}
+            | TRUE {$$ = new Node("boolean", "true", yylineno);}
+            | FALSE {$$ = new Node("boolean", "false", yylineno);}
+            /* | BOOL {$$ = new Node("Boolean", yylineno);} */
             | identifier {$$ = $1;}
-            | THIS {$$ = new Node("this", "", yylineno);}
+            | THIS {$$ = new Node("this", "this", yylineno);}
             | NEW INTDEC LBRACKET expression RBRACKET
               {
                 $$ = new Node("NewArray", "int", yylineno);
@@ -387,8 +395,7 @@ expression: expression PLUSOP expression {      /*
               }
             | NEW identifier LP RP
               {
-                $$ = new Node("NewIstance", "", yylineno);
-                $$->children.push_back($2);
+                $$ = new Node("NewIstance", $2->value, yylineno);
               }
             | NOTOP expression
               {
@@ -401,6 +408,6 @@ expression: expression PLUSOP expression {      /*
 identifier: ID            { $$ = new Node("Identifier", $1, yylineno);}
     ;
 
-factor:     INT           {  $$ = new Node("Int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}
+factor:     INT           {  $$ = new Node("int", $1, yylineno); /* printf("r5 ");  Here we create a leaf node Int. The value of the leaf node is $1 */}
             | LP expression RP { $$ = $2; /* printf("r6 ");  simply return the expression */}
     ;
