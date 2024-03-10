@@ -33,9 +33,12 @@ namespace intermediate_representation {
 
     std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* current_block);
 
-    void printCFG();
     void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited);
-
     errCodes generateCFG();
+
+    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited);
+    errCodes generateCode();
+
+    // errCodes generateCFG();
     errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table);
 }

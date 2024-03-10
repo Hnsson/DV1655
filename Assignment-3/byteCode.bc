@@ -1,0 +1,14 @@
+A.Main:
+	_
+	invokevirtual B.unary
+	istore _t0
+	iload _t0
+	print
+
+B.unary:
+	iload a
+	inot
+	istore _t1
+	_
+	
+

@@ -412,24 +412,98 @@ namespace intermediate_representation {
 
 
 
-    void printCFG() {
-        ofstream outStream("cfg.dot");
-        if (!outStream.is_open()) {
-            cerr << "Error opening file cfg.dot" << endl;
-            return;
+
+
+
+
+    // void printBlocks(BBlock* block, const std::string& prefix = "") {
+    //     if (!block) return; // Base case: if block is null, do nothing
+
+    //     // Print block name and its TAC instructions
+    //     std::cout << prefix << block->name << ":" << std::endl;
+    //     for (Tac* instruction : block->tacInstructions) {
+    //         std::cout << prefix + "    ";
+    //         instruction->dump();
+    //         std::cout << std::endl;
+    //     }
+
+    //     if (block->condition) {
+    //         std::cout << prefix + "    ";
+    //         block->condition->dump();
+    //         std::cout << std::endl;
+    //     }
+    //     // Recursively print trueExit and falseExit if they exist
+    //     if (block->trueExit) {
+    //         // std::cout << prefix + "    " << block->name << " ---> true:" << std::endl;
+    //         printBlocks(block->trueExit, prefix + "    ");
+    //     }
+    //     if (block->falseExit) {
+    //         // std::cout << prefix + "    " << block->name << " ---> false:" << std::endl;
+    //         printBlocks(block->falseExit, prefix + "    ");
+    //     }
+    // }
+
+    // errCodes generateCFG() {
+    //     std::cout << "- CFG CREATION PENDING" << "\t\t..." << std::endl;
+
+    //     // Print structure to console
+    //     for (BBlock* method_block : method_blocks) {
+    //         printBlocks(method_block);
+    //         std::cout << std::endl;
+    //     }
+
+    //     std::cout << "- CFG CREATION SUCCESS" << "\t\t✅" << std::endl;
+    //     return errCodes::SUCCESS;
+    // }
+
+    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited) {
+        if (block == nullptr || visited.find(block) != visited.end()) {
+            return; // Avoid printing the same block twice or null blocks
         }
 
-        outStream << "digraph CFG {\n";
-        unordered_set<BBlock*> visited; // To keep track of visited blocks
-        for(BBlock* methodEntry : method_blocks){
-            generateCFGContent(methodEntry, outStream, visited);
-        }
-        outStream << "}\n";
-        outStream.close();
+        visited.insert(block); // Mark the current block as visited
+        outStream << block->name << ":" << "\n";
 
-        cout << "Built CFG at cfg.dot. Use 'dot -Tpdf cfg.dot -o cfg.pdf' to generate the PDF version." << endl;
+        for(Tac* instruction : block->tacInstructions) {
+            outStream << "\t" << instruction->generateCode();
+            outStream << "\n";
+        }
+
+        // Add condition after instructions
+        if(block->condition) outStream << "\n       " << block->condition->generateCode();
+        // This will add a goto to every block if they have a trueExit, but if it has a condition, provide that first before this, which is the statement above
+        if (block->trueExit) {
+            Tac* jump = new Jump(block->trueExit->name);
+            outStream << "\n        " << jump->generateCode();
+        }
+
+        outStream << "\n";
+
+        if (block->trueExit != nullptr) {
+            generateCodeContent(block->trueExit, outStream, visited);
+        }
+        if (block->falseExit != nullptr) {
+            generateCodeContent(block->falseExit, outStream, visited);
+        }
     }
 
+
+    errCodes generateCode() {
+        ofstream outStream("byteCode.bc");
+        if (!outStream.is_open()) {
+            cerr << "Error opening file byteCode.bc" << endl;
+            return errCodes::GENERATE_BYTE_CODE;
+        }
+
+        unordered_set<BBlock*> visited; // To keep track of visited blocks
+        for(BBlock* methodEntry : method_blocks){
+            generateCodeContent(methodEntry, outStream, visited);
+        }
+
+        outStream.close();
+
+        return errCodes::SUCCESS;
+    }
 
     void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited) {
         if (block == nullptr || visited.find(block) != visited.end()) {
@@ -464,52 +538,28 @@ namespace intermediate_representation {
         }
     }
 
-
-
-    void printBlocks(BBlock* block, const std::string& prefix = "") {
-        if (!block) return; // Base case: if block is null, do nothing
-
-        // Print block name and its TAC instructions
-        std::cout << prefix << block->name << ":" << std::endl;
-        for (Tac* instruction : block->tacInstructions) {
-            std::cout << prefix + "    ";
-            instruction->dump();
-            std::cout << std::endl;
-        }
-
-        if (block->condition) {
-            std::cout << prefix + "    ";
-            block->condition->dump();
-            std::cout << std::endl;
-        }
-        // Recursively print trueExit and falseExit if they exist
-        if (block->trueExit) {
-            // std::cout << prefix + "    " << block->name << " ---> true:" << std::endl;
-            printBlocks(block->trueExit, prefix + "    ");
-        }
-        if (block->falseExit) {
-            // std::cout << prefix + "    " << block->name << " ---> false:" << std::endl;
-            printBlocks(block->falseExit, prefix + "    ");
-        }
-    }
-
     errCodes generateCFG() {
-        std::cout << "- CFG CREATION PENDING" << "\t\t..." << std::endl;
-
-        // Print structure to console
-        for (BBlock* method_block : method_blocks) {
-            printBlocks(method_block);
-            std::cout << std::endl;
+        ofstream outStream("cfg.dot");
+        if (!outStream.is_open()) {
+            cerr << "Error opening file cfg.dot" << endl;
+            return errCodes::GENERATE_IR;
         }
 
-        std::cout << "- CFG CREATION SUCCESS" << "\t\t✅" << std::endl;
+        outStream << "digraph CFG {\n";
+        unordered_set<BBlock*> visited; // To keep track of visited blocks
+        for(BBlock* methodEntry : method_blocks){
+            generateCFGContent(methodEntry, outStream, visited);
+        }
+        outStream << "}\n";
+        outStream.close();
+
+        cout << "Built CFG at cfg.dot. Use 'dot -Tpdf cfg.dot -o cfg.pdf' to generate the PDF version." << endl;
         return errCodes::SUCCESS;
     }
 
-
     errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table) {
         try {
-            errCodes cfg_error = errCodes::SUCCESS;
+            errCodes cfg_error = errCodes::SUCCESS, cg_error = errCodes::SUCCESS;
 
             sym_table->resetTable();
             BBlock* _top_block = new BBlock("Program");
@@ -517,9 +567,12 @@ namespace intermediate_representation {
             traverseTreeIR(root, sym_table);
 
             // cfg_error = generateCFG();
-            printCFG();
+            // cfg_error = printCFG();
+            cfg_error = generateCFG();
+            cg_error = generateCode();
 
-            if (cfg_error != errCodes::SUCCESS) throw std::runtime_error("");
+
+            if (cfg_error != errCodes::SUCCESS || cg_error != errCodes::SUCCESS) throw std::runtime_error("");
 
             return errCodes::SUCCESS; // If no exceptions were thrown, analysis succeeded
         } catch (const std::runtime_error& e) {
