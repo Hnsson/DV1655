@@ -9,6 +9,8 @@ enum errCodes
     SYNTAX_ERROR = 2,
     AST_ERROR = 3,
     SEMANTIC_ERROR = 4,
+    GENERATE_IR = 5,
+    GENERATE_BYTE_CODE = 6,
     SEGMENTATION_FAULT = 139
 };
 

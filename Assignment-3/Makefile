@@ -1,5 +1,5 @@
-compiler: lex.yy.c parser.tab.o main.cc parsing_engine.cc cfg.cc
-		g++ -g -w -ocompiler parser.tab.o lex.yy.c main.cc parsing_engine.cc tac.hh cfg.cc -std=c++14
+compiler: lex.yy.c parser.tab.o main.cc parsing_engine.cc cfg.cc tac.hh byte_code.cc
+		g++ -g -w -ocompiler parser.tab.o lex.yy.c main.cc parsing_engine.cc tac.hh cfg.cc byte_code.cc -std=c++14
 parser.tab.o: parser.tab.cc
 		g++ -g -w -c parser.tab.cc -std=c++14
 parser.tab.cc: parser.yy
