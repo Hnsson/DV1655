@@ -1,0 +1,16 @@
+public class A {
+    public static void main (String[] args) {
+        System.out.println(B.unary());
+    }
+}
+
+class B {
+    boolean a;
+    boolean b;
+
+    // unary expression
+    public boolean unary() {
+        b = !a;
+        return b;
+    }
+}

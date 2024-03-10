@@ -1,0 +1,57 @@
+digraph {
+n0 [label="Program:Start"];
+n1 [label="Main Class:A"];
+n2 [label="Identifier:args"];
+n1 -> n2
+n3 [label="Statements:"];
+n4 [label="SysPrintLn:"];
+n5 [label="ExpressionCallMethod:"];
+n6 [label="Identifier:B"];
+n5 -> n6
+n7 [label="Identifier:unary"];
+n5 -> n7
+n4 -> n5
+n3 -> n4
+n1 -> n3
+n0 -> n1
+n8 [label="Class:B"];
+n9 [label="Var declarations:"];
+n10 [label="Var declaration:"];
+n11 [label="BooleanType:boolean"];
+n10 -> n11
+n12 [label="Identifier:a"];
+n10 -> n12
+n9 -> n10
+n13 [label="Var declaration:"];
+n14 [label="BooleanType:boolean"];
+n13 -> n14
+n15 [label="Identifier:b"];
+n13 -> n15
+n9 -> n13
+n8 -> n9
+n16 [label="MethodDeclaration:"];
+n17 [label="Method:unary"];
+n18 [label="BooleanType:boolean"];
+n17 -> n18
+n19 [label="MethodContent:"];
+n20 [label="Content:"];
+n21 [label="Statement:"];
+n22 [label="Identifier assign:"];
+n23 [label="Identifier:b"];
+n22 -> n23
+n24 [label="NotOperation:"];
+n25 [label="Identifier:a"];
+n24 -> n25
+n22 -> n24
+n21 -> n22
+n20 -> n21
+n19 -> n20
+n26 [label="Return:"];
+n27 [label="Identifier:b"];
+n26 -> n27
+n19 -> n26
+n17 -> n19
+n16 -> n17
+n8 -> n16
+n0 -> n8
+}

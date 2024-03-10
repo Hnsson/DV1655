@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <string>
+#include "byte_code.hh"
+
 
 class Tac {
     protected:
@@ -13,6 +15,8 @@ class Tac {
 
         virtual void dump() = 0; 
         virtual std::string getDump() = 0;
+
+        virtual std::string generateCode() = 0;
 };
 
 class Expression : public Tac {
@@ -25,6 +29,10 @@ public:
     }
     std::string getDump() override {
         return result + " := " + lhs + " " + op + " " + rhs;
+    }
+
+    std::string generateCode() override { return "";
+
     }
 };
 
@@ -39,6 +47,37 @@ public:
     std::string getDump() override {
         return result + " := " + op + " " + lhs;
     }
+
+    std::string generateCode() override {
+        byte_code::Instruction* _result = new byte_code::Instruction();
+        byte_code::Instruction* _op = new byte_code::Instruction();
+        byte_code::Instruction* _lhs = new byte_code::Instruction();
+
+        // Set lhs instruction, (either constant "int, bool" or idenfitifer)
+        // If a bool, true = 1, false = 0
+        // If integer just see if type casting works, if not then it is a identifier
+        if (lhs == "true") _lhs->argument = "1";
+        else if (lhs == "false") _lhs->argument = "0";
+        else {
+            if (byte_code::is_number(lhs)) {
+                // Load constant
+                _lhs->type = byte_code::ICONST;
+            } else {
+                // Load identifer
+                _lhs->type = byte_code::ILOAD;
+            }
+        }
+        _lhs->argument = lhs;
+
+        // Set operator instruction, ()
+        _op->type = byte_code::INOT;
+
+        // Create final instruction
+        _result->type = byte_code::ISTORE;
+        _result->argument = result;
+
+        return _lhs->generateLine() + "\n\t" + _op->generateLine() + "\n\t" + _result->generateLine();
+    }
 };
 
 class MethodCall : public Tac {
@@ -51,6 +90,25 @@ public:
     }
     std::string getDump() override {
         return result + " := " + op + " " + lhs + ", " + rhs;
+    }
+
+    std::string generateCode() override {
+        byte_code::Instruction* _result = new byte_code::Instruction();
+        byte_code::Instruction* _invoke = new byte_code::Instruction();
+
+        if (std::stoi(rhs) == 0) {
+            // No parameter, just invoke function
+            _invoke->type = byte_code::INVOKEVIRTUAL;
+            _invoke->argument = lhs;
+        } else {
+            // Paramters, need to push to stack `rhs` amount.
+        }
+
+        // Create final instruction
+        _result->type = byte_code::ISTORE;
+        _result->argument = result;
+
+        return _invoke->generateLine() + "\n\t" + _result->generateLine();
     }
 };
 
@@ -65,6 +123,14 @@ public:
     std::string getDump() override {
         return op + " " + result;
     }
+
+    std::string generateCode() override {
+        byte_code::Instruction* line = new byte_code::Instruction();
+        line->type = byte_code::GOTO;
+        line->argument = this->result;
+
+        return line->generateLine();
+    }
 };
 
 class CondJump : public Tac {
@@ -77,6 +143,10 @@ public:
     }
     std::string getDump() override {
         return op + " " + result + " goto " + lhs;
+    }
+
+    std::string generateCode() override { return "";
+
     }
 };
 
@@ -91,6 +161,10 @@ public:
     std::string getDump() override {
         return result + " := " + lhs + "[" + rhs + "]";
     }
+
+    std::string generateCode() override { return "";
+
+    }
 };
 
 class ArrayAssign : public Tac {
@@ -103,6 +177,10 @@ public:
     }
     std::string getDump() override {
         return lhs + "[" + rhs + "] := " + result;
+    }
+
+    std::string generateCode() override { return "";
+
     }
 };
 
@@ -117,6 +195,10 @@ public:
     std::string getDump() override {
         return result + " := " + op + " " + lhs;
     }
+
+    std::string generateCode() override { return "";
+
+    }
 };
 
 class Copy : public Tac {
@@ -129,6 +211,10 @@ public:
     }
     std::string getDump() override {
         return result + " := " + lhs;
+    }
+
+    std::string generateCode() override {
+        return "_";
     }
 };
 
@@ -143,6 +229,30 @@ public:
     std::string getDump() override {
         return "print: " + lhs;
     }
+
+    std::string generateCode() override {
+        byte_code::Instruction* _result = new byte_code::Instruction();
+        byte_code::Instruction* _lhs = new byte_code::Instruction();
+
+        if (lhs == "true") _lhs->argument = "1";
+        else if (lhs == "false") _lhs->argument = "0";
+        else {
+            if (byte_code::is_number(lhs)) {
+                // Load constant
+                _lhs->type = byte_code::ICONST;
+            } else {
+                // Load identifer
+                _lhs->type = byte_code::ILOAD;
+            }
+        }
+        _lhs->argument = lhs;
+
+        // Set operator instruction, ()
+        _result->type = byte_code::PRINT;
+
+
+        return _lhs->generateLine() + "\n\t" + _result->generateLine();
+    }
 };
 
 class Parameter : public Tac {
@@ -155,6 +265,10 @@ public:
     }
     std::string getDump() override {
         return "param " + lhs;
+    }
+
+    std::string generateCode() override { return "";
+
     }
 };
 
@@ -169,6 +283,10 @@ public:
     std::string getDump() override {
         return "return " + lhs;
     }
+
+    std::string generateCode() override { return "";
+
+    }
 };
 
 class NewObject : public Tac {
@@ -182,6 +300,10 @@ public:
     std::string getDump() override {
         return result + " := " + op + " " + lhs;
     }
+
+    std::string generateCode() override { return "";
+
+    }
 };
 
 class NewArray : public Tac {
@@ -194,5 +316,9 @@ public:
     }
     std::string getDump() override {
         return result + " := new " + lhs + ", " + rhs;
+    }
+
+    std::string generateCode() override { return "";
+
     }
 };
