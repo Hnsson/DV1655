@@ -7,10 +7,20 @@ public class A {
 class B {
     boolean a;
     boolean b;
+    int c;
+    int d;
 
     // unary expression
     public boolean unary() {
+        c = 0;
+        d = c + c;
+        a = true;
         b = !a;
+        if(b) {
+            b = false;
+        } else {
+            b = true;
+        }
         return b;
     }
 }

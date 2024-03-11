@@ -1,4 +1,11 @@
 digraph CFG {
-    "A.Main" [shape=box label="A.Main\nargs := Param\n_t0 := call B.unary, 0\nprint: _t0\n"];
-    "B.unary" [shape=box label="B.unary\n_t1 := ! a\nb := _t1\nreturn b\n"];
+    "Factorial.Main" [shape=box label="Factorial.Main\na := Param\nparam 10\n_t0 := call Fac.ComputeFac, 1\nprint: _t0\n"];
+    "Fac.ComputeFac" [shape=box label="Fac.ComputeFac\nnum := Param\n_t1 := num < 1\n\niffalse _t1 goto block_1\ngoto block_0"];
+    "Fac.ComputeFac" -> "block_0" [label="true" color="#7dff90"];
+    "block_0" [shape=box label="block_0\nnum_aux := 1\n\ngoto block_2"];
+    "block_0" -> "block_2" [label="true" color="#7dff90"];
+    "block_2" [shape=box label="block_2\nreturn num_aux\n"];
+    "Fac.ComputeFac" -> "block_1" [label="false" color="#ff7d7d"];
+    "block_1" [shape=box label="block_1\n_t2 := num - 1\nparam _t2\n_t3 := call Fac.ComputeFac, 1\n_t4 := num * _t3\nnum_aux := _t4\n\ngoto block_2"];
+    "block_1" -> "block_2" [label="true" color="#7dff90"];
 }

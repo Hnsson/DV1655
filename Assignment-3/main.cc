@@ -1,9 +1,9 @@
 #include <iostream>
 #include "parser.tab.hh"
-// #include "symbol_table.hh"
 #include "parsing_engine.hh"
 #include "error_codes.hh"
 #include "cfg.hh"
+#include "interpreter.hh"
 
 extern Node *root;
 extern FILE *yyin;
@@ -73,29 +73,36 @@ int main(int argc, char **argv)
 			try
 			{
 				
-				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS, errCode_3 = errCodes::SUCCESS;
+				int errCode_1 = errCodes::SUCCESS, errCode_2 = errCodes::SUCCESS, errCode_3 = errCodes::SUCCESS, errCode_4 = errCodes::SUCCESS;
 				// root->print_tree();
-				root->generate_tree(false);
+				root->generate_tree(true);
 
-				// Syntax Analysis + Duplicate Identifier
+				// ---------------------------- SYNTAX ANALYSIS ------------------------------ //
 				symbol_table::SymbolTable* sym_table = new symbol_table::SymbolTable();
 				errCode_1 = symbol_table::syntax_analysis(root, sym_table);
-
 				// sym_table->printTable(); 
 				
-				// Semantic Analysis
+				// --------------------------- SEMNATIC ANALYSIS ----------------------------- //
 				errCode_2 = semantic_analysis::semantic_analysis(root, sym_table);
 
 				if (errCode_1 != errCodes::SUCCESS || errCode_2 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEMANTIC_ERROR, "SEMANTIC ANALYZER");
-
 				std::cout << "- SEMANTIC ANALYZER SUCCEEDED\t✅" << std::endl;
+				
 				// At this point, it is presumed that the provided source code is lexically, syntactically and semantically correct.
-
+				// ---------------------------- IR GENERATION -------------------------------- //
 				errCode_3 = intermediate_representation::generateIR(root, sym_table);
 
 				if (errCode_3 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::SEGMENTATION_FAULT, "IR GENERATION");
-
 				std::cout << "- IR GENERATION SUCCEEDED\t✅" << std::endl;
+
+				// ---------------------------- INTERPRETER --------------------------------- //
+				interpreter::Interpreter* ip = new interpreter::Interpreter("byteCode.bc");
+				errCode_4 = ip->interpret();
+
+				delete ip;
+
+				if (errCode_4 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::INTERPRETER_ERROR, "INTERPRETER");
+				std::cout << "- INTERPRETER SUCCEEDED\t\t✅" << std::endl;
 			}
 			catch (ErrorCodeException& e) {
 				errCode = e.errorCode;

@@ -41,7 +41,7 @@ public:
 		outStream << "}" << std::endl;
 		outStream.close();
 
-		if (print) printf("\nBuilt a parse-tree at %s. Use 'make tree' to generate the pdf version.\n", filename);
+		if (print) printf("Built a parse-tree at %s. Use 'make tree' to generate the pdf version.\n", filename);
   	}
 
   	void generate_tree_content(int &count, ofstream *outStream) {

@@ -410,53 +410,7 @@ namespace intermediate_representation {
         return node->type;
     }
 
-
-
-
-
-
-
-    // void printBlocks(BBlock* block, const std::string& prefix = "") {
-    //     if (!block) return; // Base case: if block is null, do nothing
-
-    //     // Print block name and its TAC instructions
-    //     std::cout << prefix << block->name << ":" << std::endl;
-    //     for (Tac* instruction : block->tacInstructions) {
-    //         std::cout << prefix + "    ";
-    //         instruction->dump();
-    //         std::cout << std::endl;
-    //     }
-
-    //     if (block->condition) {
-    //         std::cout << prefix + "    ";
-    //         block->condition->dump();
-    //         std::cout << std::endl;
-    //     }
-    //     // Recursively print trueExit and falseExit if they exist
-    //     if (block->trueExit) {
-    //         // std::cout << prefix + "    " << block->name << " ---> true:" << std::endl;
-    //         printBlocks(block->trueExit, prefix + "    ");
-    //     }
-    //     if (block->falseExit) {
-    //         // std::cout << prefix + "    " << block->name << " ---> false:" << std::endl;
-    //         printBlocks(block->falseExit, prefix + "    ");
-    //     }
-    // }
-
-    // errCodes generateCFG() {
-    //     std::cout << "- CFG CREATION PENDING" << "\t\t..." << std::endl;
-
-    //     // Print structure to console
-    //     for (BBlock* method_block : method_blocks) {
-    //         printBlocks(method_block);
-    //         std::cout << std::endl;
-    //     }
-
-    //     std::cout << "- CFG CREATION SUCCESS" << "\t\t✅" << std::endl;
-    //     return errCodes::SUCCESS;
-    // }
-
-    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited) {
+    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited, bool print) {
         if (block == nullptr || visited.find(block) != visited.end()) {
             return; // Avoid printing the same block twice or null blocks
         }
@@ -465,25 +419,30 @@ namespace intermediate_representation {
         outStream << block->name << ":" << "\n";
 
         for(Tac* instruction : block->tacInstructions) {
-            outStream << "\t" << instruction->generateCode();
-            outStream << "\n";
+            // std::cout << "DUMP: " << instruction->getDump() << " : " << instruction->generateCode() << std::endl;
+            outStream << "\t" << instruction->generateCode() << "\n";
         }
 
         // Add condition after instructions
-        if(block->condition) outStream << "\n       " << block->condition->generateCode();
+        if(block->condition) outStream << "\n\t" << block->condition->generateCode();
         // This will add a goto to every block if they have a trueExit, but if it has a condition, provide that first before this, which is the statement above
-        if (block->trueExit) {
+        // if (block->trueExit) {
+        if (block->trueExit && print) {
             Tac* jump = new Jump(block->trueExit->name);
-            outStream << "\n        " << jump->generateCode();
+            outStream << "\n\t" << jump->generateCode();
         }
 
+        if (block->name.find(".Main") != std::string::npos) {
+            Tac* exit = new StopExecution();
+            outStream << "\t" << exit->generateCode() << "\n";
+        }
         outStream << "\n";
 
         if (block->trueExit != nullptr) {
-            generateCodeContent(block->trueExit, outStream, visited);
+            generateCodeContent(block->trueExit, outStream, visited, false);
         }
         if (block->falseExit != nullptr) {
-            generateCodeContent(block->falseExit, outStream, visited);
+            generateCodeContent(block->falseExit, outStream, visited, true);
         }
     }
 
@@ -497,7 +456,7 @@ namespace intermediate_representation {
 
         unordered_set<BBlock*> visited; // To keep track of visited blocks
         for(BBlock* methodEntry : method_blocks){
-            generateCodeContent(methodEntry, outStream, visited);
+            generateCodeContent(methodEntry, outStream, visited, false);
         }
 
         outStream.close();

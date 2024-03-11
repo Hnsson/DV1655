@@ -1,14 +1,44 @@
-A.Main:
-	_
-	invokevirtual B.unary
+Factorial.Main:
+	iload Param
+	istore a
+	iconst 10
+	invokevirtual Fac.ComputeFac
 	istore _t0
 	iload _t0
 	print
+	stop
 
-B.unary:
-	iload a
-	inot
+Fac.ComputeFac:
+	iload Param
+	istore num
+	iload num
+	iconst 1
+	ilt
 	istore _t1
-	_
-	
 
+	iload _t1
+	iffalse goto block_1
+block_0:
+	iconst 1
+	istore num_aux
+
+block_2:
+	iload num_aux
+	ireturn
+
+block_1:
+	iload num
+	iconst 1
+	isub
+	istore _t2
+	iload _t2
+	invokevirtual Fac.ComputeFac
+	istore _t3
+	iload num
+	iload _t3
+	imul
+	istore _t4
+	iload _t4
+	istore num_aux
+
+	goto block_2

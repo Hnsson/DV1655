@@ -11,6 +11,7 @@ enum errCodes
     SEMANTIC_ERROR = 4,
     GENERATE_IR = 5,
     GENERATE_BYTE_CODE = 6,
+    INTERPRETER_ERROR = 7,
     SEGMENTATION_FAULT = 139
 };
 
