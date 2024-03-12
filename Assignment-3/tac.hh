@@ -58,7 +58,7 @@ public:
         if (rhs == "true") {
             _rhs->argument = "1"; // True represented as integer 1
             _rhs->type = byte_code::ICONST;
-        } else if (lhs == "false") {
+        } else if (rhs == "false") {
             _rhs->argument = "0"; // False represented as integer 0
             _rhs->type = byte_code::ICONST;
         } else {
@@ -123,23 +123,22 @@ public:
         // If a bool, true = 1, false = 0
         // If integer just see if type casting works, if not then it is a identifier
         if (lhs == "true") {
-            _lhs->argument = "1";
+            _lhs->argument = "1"; // True represented as integer 1
             _lhs->type = byte_code::ICONST;
-        }
-        else if (lhs == "false") {
-            _lhs->argument = "0";
+        } else if (lhs == "false") {
+            _lhs->argument = "0"; // False represented as integer 0
             _lhs->type = byte_code::ICONST;
-        }
-        else {
+        } else {
+            // Determine if 'lhs' is a number or an identifier
             if (byte_code::is_number(lhs)) {
-                // Load constant
+                _lhs->argument = lhs; // Directly use the number as the argument
                 _lhs->type = byte_code::ICONST;
             } else {
-                // Load identifer
+                // Treat 'lhs' as an identifier
+                _lhs->argument = lhs;
                 _lhs->type = byte_code::ILOAD;
             }
         }
-        _lhs->argument = lhs;
 
         // Set operator instruction, ()
         _op->type = byte_code::INOT;

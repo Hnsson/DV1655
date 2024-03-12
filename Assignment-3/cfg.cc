@@ -20,7 +20,7 @@ namespace intermediate_representation {
             (!block->falseExit || block->falseExit == continueBlock);
     }
 
-    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table) {
+    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* prev_block = nullptr) {
         if(node->type == "Program") {
             if(!node->children.empty()) {
                 // Assuming the first child is always the main class and the rest are part of the class list
@@ -184,12 +184,12 @@ namespace intermediate_representation {
 
 
             auto it = node->children.begin();
-            std::string cond = traverseTreeIR(*it, sym_table);
+
+            std::string cond = traverseTreeIR(*it, sym_table, header_block);
             // Dont need, add this in generate
             // Tac* jumpHeader = new Jump(headerBlockName);
             // current_block->tacInstructions.push_back(jumpHeader);
             current_block->trueExit = header_block;
-
 
             std::string temp_cond = generateTempId();
             Tac* conditionalInstruction = new CondJump(continueBlockName, cond);
@@ -239,28 +239,66 @@ namespace intermediate_representation {
 
         // Complex Operators
         if(node->type == "LogicalAndExpression" || node->type == "LogicalOrExpression") {
-            std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
-            std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
-
-            return "boolean";
-        }
-        if(node->type == "LesserThanExpression" || node->type == "GreaterThanExpression") {
-            std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
-            std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
+            std::string lhsType = traverseTreeIR(node->children.front(), sym_table, prev_block);
+            std::string rhsType = traverseTreeIR(node->children.back(), sym_table, prev_block);
 
             std::string name = generateTempId();
             sym_table->put(name, new symbol_table::Variable(name, "boolean"));
-            Tac* lesserThanInstruction = new Expression("<", lhsType, rhsType, name);
-            current_block->tacInstructions.push_back(lesserThanInstruction);
+            Tac* instruction;
+            if (node->type == "LogicalAndExpression") {
+                instruction = new Expression("&&", lhsType, rhsType, name);
+            } else {
+                instruction = new Expression("||", lhsType, rhsType, name);
+            }
+
+            // Adding to header_block of while instead
+            if(prev_block != nullptr) {
+                prev_block->tacInstructions.push_back(instruction);
+            } else {
+                current_block->tacInstructions.push_back(instruction);
+            }
+
+            return name;
+        }
+        if(node->type == "LesserThanExpression" || node->type == "GreaterThanExpression") {
+            std::string lhsType = traverseTreeIR(node->children.front(), sym_table, prev_block);
+            std::string rhsType = traverseTreeIR(node->children.back(), sym_table, prev_block);
+
+            std::string name = generateTempId();
+            sym_table->put(name, new symbol_table::Variable(name, "boolean"));
+            Tac* instruction;
+            if (node->type == "LesserThanExpression") {
+                instruction = new Expression("<", lhsType, rhsType, name);
+            } else {
+                instruction = new Expression(">", lhsType, rhsType, name);
+            }
+
+            // Adding to header_block of while instead
+            if(prev_block != nullptr) {
+                prev_block->tacInstructions.push_back(instruction);
+            } else {
+                current_block->tacInstructions.push_back(instruction);
+            }
 
             return name;
         }
         // EqualExpression
         if(node->type == "EqualExpression") {
-            std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
-            std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
+            std::string lhsType = traverseTreeIR(node->children.front(), sym_table, prev_block);
+            std::string rhsType = traverseTreeIR(node->children.back(), sym_table, prev_block);
 
-            return "boolean";
+            std::string name = generateTempId();
+            sym_table->put(name, new symbol_table::Variable(name, "boolean"));
+            Tac* instruction = new Expression("==", lhsType, rhsType, name);
+
+            // Adding to header_block of while instead
+            if(prev_block != nullptr) {
+                prev_block->tacInstructions.push_back(instruction);
+            } else {
+                current_block->tacInstructions.push_back(instruction);
+            }
+
+            return name;
         }
 
 
@@ -439,7 +477,7 @@ namespace intermediate_representation {
         outStream << "\n";
 
         if (block->trueExit != nullptr) {
-            generateCodeContent(block->trueExit, outStream, visited, false);
+            generateCodeContent(block->trueExit, outStream, visited, true);
         }
         if (block->falseExit != nullptr) {
             generateCodeContent(block->falseExit, outStream, visited, true);

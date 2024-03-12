@@ -96,6 +96,15 @@ int main(int argc, char **argv)
 				std::cout << "- IR GENERATION SUCCEEDED\t✅" << std::endl;
 
 				// ---------------------------- INTERPRETER --------------------------------- //
+				// Files that works:
+				// [X] - E.java
+				// [X] - D1.java
+				// [X] - D2.java
+				// [X] - D3.java
+				// [X] - C1.java
+				// [X] - C2.java
+				// [ ] - B.java	 - Prints 3628800, 5, 1 --> wrong, should be 120, 55, 1
+				// [ ] - A.java	 - Prints 10, 1, 1, 4, 4 --> wrong, should be 10, 1, 2, 3, 4
 				interpreter::Interpreter* ip = new interpreter::Interpreter("byteCode.bc");
 				errCode_4 = ip->interpret();
 

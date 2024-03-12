@@ -1,11 +1,20 @@
 digraph CFG {
-    "Factorial.Main" [shape=box label="Factorial.Main\na := Param\nparam 10\n_t0 := call Fac.ComputeFac, 1\nprint: _t0\n"];
-    "Fac.ComputeFac" [shape=box label="Fac.ComputeFac\nnum := Param\n_t1 := num < 1\n\niffalse _t1 goto block_1\ngoto block_0"];
-    "Fac.ComputeFac" -> "block_0" [label="true" color="#7dff90"];
-    "block_0" [shape=box label="block_0\nnum_aux := 1\n\ngoto block_2"];
+    "A.Main" [shape=box label="A.Main\na := Param\n_t0 := call Bar.foo, 0\nprint: _t0\n"];
+    "Bar.foo" [shape=box label="Bar.foo\naux := 1\naux2 := true\nparam aux\n_t1 := call Bar.foo2, 1\naux := _t1\nparam 2\nparam 5\nparam aux2\n_t2 := call Bar.foo3, 3\naux := _t2\nreturn aux\n"];
+    "Bar.foo2" [shape=box label="Bar.foo2\np1 := Param\n_t3 := p1 < 2\n\niffalse _t3 goto block_1\ngoto block_0"];
+    "Bar.foo2" -> "block_0" [label="true" color="#7dff90"];
+    "block_0" [shape=box label="block_0\nprint: 10\n\ngoto block_2"];
     "block_0" -> "block_2" [label="true" color="#7dff90"];
-    "block_2" [shape=box label="block_2\nreturn num_aux\n"];
-    "Fac.ComputeFac" -> "block_1" [label="false" color="#ff7d7d"];
-    "block_1" [shape=box label="block_1\n_t2 := num - 1\nparam _t2\n_t3 := call Fac.ComputeFac, 1\n_t4 := num * _t3\nnum_aux := _t4\n\ngoto block_2"];
+    "block_2" [shape=box label="block_2\nreturn 1\n"];
+    "Bar.foo2" -> "block_1" [label="false" color="#ff7d7d"];
+    "block_1" [shape=box label="block_1\nprint: 0\n\ngoto block_2"];
     "block_1" -> "block_2" [label="true" color="#7dff90"];
+    "Bar.foo3" [shape=box label="Bar.foo3\np1 := Param\np2 := Param\np3 := Param\n\niffalse p3 goto block_4\ngoto block_3"];
+    "Bar.foo3" -> "block_3" [label="true" color="#7dff90"];
+    "block_3" [shape=box label="block_3\nprint: 1\n\ngoto block_5"];
+    "block_3" -> "block_5" [label="true" color="#7dff90"];
+    "block_5" [shape=box label="block_5\nprint: p1\n_t4 := p2 - p1\nprint: _t4\nreturn 4\n"];
+    "Bar.foo3" -> "block_4" [label="false" color="#ff7d7d"];
+    "block_4" [shape=box label="block_4\nprint: 0\n\ngoto block_5"];
+    "block_4" -> "block_5" [label="true" color="#7dff90"];
 }

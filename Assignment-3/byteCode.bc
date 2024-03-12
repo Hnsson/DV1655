@@ -1,44 +1,85 @@
-Factorial.Main:
+A.Main:
 	iload Param
 	istore a
-	iconst 10
-	invokevirtual Fac.ComputeFac
+	invokevirtual Bar.foo
 	istore _t0
 	iload _t0
 	print
 	stop
 
-Fac.ComputeFac:
-	iload Param
-	istore num
-	iload num
+Bar.foo:
 	iconst 1
-	ilt
+	istore aux
+	iconst 1
+	istore aux2
+	iload aux
+	invokevirtual Bar.foo2
 	istore _t1
-
 	iload _t1
+	istore aux
+	iconst 2
+	iconst 5
+	iload aux2
+	invokevirtual Bar.foo3
+	istore _t2
+	iload _t2
+	istore aux
+	iload aux
+	ireturn
+
+Bar.foo2:
+	iload Param
+	istore p1
+	iload p1
+	iconst 2
+	ilt
+	istore _t3
+
+	iload _t3
 	iffalse goto block_1
 block_0:
-	iconst 1
-	istore num_aux
+	iconst 10
+	print
 
+	goto block_2
 block_2:
-	iload num_aux
+	iconst 1
 	ireturn
 
 block_1:
-	iload num
-	iconst 1
-	isub
-	istore _t2
-	iload _t2
-	invokevirtual Fac.ComputeFac
-	istore _t3
-	iload num
-	iload _t3
-	imul
-	istore _t4
-	iload _t4
-	istore num_aux
+	iconst 0
+	print
 
 	goto block_2
+Bar.foo3:
+	iload Param
+	istore p1
+	iload Param
+	istore p2
+	iload Param
+	istore p3
+
+	iload p3
+	iffalse goto block_4
+block_3:
+	iconst 1
+	print
+
+	goto block_5
+block_5:
+	iload p1
+	print
+	iload p2
+	iload p1
+	isub
+	istore _t4
+	iload _t4
+	print
+	iconst 4
+	ireturn
+
+block_4:
+	iconst 0
+	print
+
+	goto block_5
