@@ -53,11 +53,11 @@ block_1:
 	goto block_2
 Bar.foo3:
 	iload Param
-	istore p1
+	istore p3
 	iload Param
 	istore p2
 	iload Param
-	istore p3
+	istore p1
 
 	iload p3
 	iffalse goto block_4

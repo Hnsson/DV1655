@@ -12,9 +12,9 @@ namespace symbol_table {
     protected:
         string name;
         string type; // For variable: int, int[], boolean, custom class types; For method: return type; For class: class name itself
-        string sym_record; // "global" for class, class name for method, method name for variable
         int lineno;
     public:
+        string sym_record; // "global" for class, class name for method, method name for variable
         SymbolRecord(string name, string type, int lineno = -1)
             : name(name), type(type), lineno(lineno) {}
         virtual ~SymbolRecord() {}

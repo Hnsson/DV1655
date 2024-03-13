@@ -9,7 +9,7 @@ digraph CFG {
     "Bar.foo2" -> "block_1" [label="false" color="#ff7d7d"];
     "block_1" [shape=box label="block_1\nprint: 0\n\ngoto block_2"];
     "block_1" -> "block_2" [label="true" color="#7dff90"];
-    "Bar.foo3" [shape=box label="Bar.foo3\np1 := Param\np2 := Param\np3 := Param\n\niffalse p3 goto block_4\ngoto block_3"];
+    "Bar.foo3" [shape=box label="Bar.foo3\np3 := Param\np2 := Param\np1 := Param\n\niffalse p3 goto block_4\ngoto block_3"];
     "Bar.foo3" -> "block_3" [label="true" color="#7dff90"];
     "block_3" [shape=box label="block_3\nprint: 1\n\ngoto block_5"];
     "block_3" -> "block_5" [label="true" color="#7dff90"];

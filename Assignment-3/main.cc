@@ -40,8 +40,11 @@ void yy::parser::error(std::string const &err)
 int main(int argc, char **argv)
 {
 	// Reads from file if a file name is passed as an argument. Otherwise, reads from stdin.
+	bool if_interpreter = false;
 	if (argc > 1)
 	{
+		if (argc > 2) if_interpreter = true;
+
 		if (!(yyin = fopen(argv[1], "r")))
 		{
 			perror(argv[1]);
@@ -103,15 +106,17 @@ int main(int argc, char **argv)
 				// [X] - D3.java
 				// [X] - C1.java
 				// [X] - C2.java
-				// [ ] - B.java	 - Prints 3628800, 5, 1 --> wrong, should be 120, 55, 1
-				// [ ] - A.java	 - Prints 10, 1, 1, 4, 4 --> wrong, should be 10, 1, 2, 3, 4
-				interpreter::Interpreter* ip = new interpreter::Interpreter("byteCode.bc");
-				errCode_4 = ip->interpret();
+				// [X] - B.java
+				// [X] - A.java
+				if (if_interpreter) {
+					interpreter::Interpreter* ip = new interpreter::Interpreter("byteCode.bc");
+					errCode_4 = ip->interpret();
 
-				delete ip;
+					delete ip;
 
-				if (errCode_4 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::INTERPRETER_ERROR, "INTERPRETER");
-				std::cout << "- INTERPRETER SUCCEEDED\t\t✅" << std::endl;
+					if (errCode_4 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::INTERPRETER_ERROR, "INTERPRETER");
+					std::cout << "- INTERPRETER SUCCEEDED\t\t✅" << std::endl;
+				}
 			}
 			catch (ErrorCodeException& e) {
 				errCode = e.errorCode;

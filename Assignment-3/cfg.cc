@@ -87,7 +87,7 @@ namespace intermediate_representation {
             }
         }
         if(node->type == "Method parameters") {
-            for (auto i = node->children.begin(); i != node->children.end(); i++) {
+            for (auto i = node->children.rbegin(); i != node->children.rend(); i++) {
                 std::string param_name = traverseTreeIR(*i, sym_table);
                 // Tac* paramInstruction = new Parameter(param_name);
                 Tac* paramInstruction = new Copy("Param", param_name);
@@ -219,6 +219,22 @@ namespace intermediate_representation {
         if(node->type == "Identifier assign") {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
             std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
+
+            // NEW ADDITION:
+            symbol_table::Variable* lhs = (symbol_table::Variable*)sym_table->findSymbol(lhsType);
+            if (lhs) {
+                if (sym_table->findSymbol(lhsType)->getType() == "NewInstance") {
+                    lhsType = lhs->getName();
+                }
+            }
+
+            symbol_table::Variable* rhs = (symbol_table::Variable*)sym_table->findSymbol(rhsType);
+            if (rhs) {
+                if (sym_table->findSymbol(rhsType)->getType() == "NewInstance") {
+                    rhsType = rhs->getName();
+                }
+            }
+            // ---
 
             // std::cout << lhsType << " := " << rhsType << std::endl;
             Tac* copyInstruction = new Copy(rhsType, lhsType);
@@ -353,6 +369,11 @@ namespace intermediate_representation {
             // [X] - (IF EXISTS) Check if the number of arguments and argument types are correct to the function from mhs (rhs)
             // First step
             std::string lhsName = traverseTreeIR(node->children.front(), sym_table);
+
+            symbol_table::SymbolRecord* lhs = sym_table->getRootScope()->lookup(lhsName);
+            if (lhs) {
+                lhsName = lhs->getType();
+            }
             // std::string lhsName = node->children.front()->value;
             // std::string className = sym_table->findSymbol(lhsName)->getType();
             // Second step
@@ -423,8 +444,7 @@ namespace intermediate_representation {
 
             // ------ USE THESE IF YOU WANT TO CREATE TEMPORY VARIABLE WITH NEW INSTANCE ------
             // std::string name = generateTempId();
-
-            // sym_table->put(name, new symbol_table::Variable(name, instance));
+            // sym_table->put(name, new symbol_table::Variable(instance, "NewInstance"));
             // Tac* newObjectInstruction = new NewObject(instance, name);
             // current_block->tacInstructions.push_back(newObjectInstruction);
 
