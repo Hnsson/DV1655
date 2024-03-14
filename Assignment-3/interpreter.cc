@@ -18,13 +18,11 @@ namespace stack_machine
         // std::cout << "\tLINE: " << line_no + 1 << std::endl;
         switch (instruction.type) {
             case byte_code::ILOAD:
-                if (instruction.argument != "Param") {
-                    // Assuming you have a way to access local variables, e.g., an array or map
-                    op_1 = getVariable(instruction.argument);
-                    // std::cout << "PUSHING: "<< instruction.argument << " TO STACK: " << op_1 << std::endl;
-                    // op_1 = localStack.top()[instruction.argument];
-                    dataStack.push(op_1);
-                }
+                // Assuming you have a way to access local variables, e.g., an array or map
+                op_1 = getVariable(instruction.argument);
+                // std::cout << "PUSHING: "<< instruction.argument << " TO STACK: " << op_1 << std::endl;
+                // op_1 = localStack.top()[instruction.argument];
+                dataStack.push(op_1);
                 break;
             case byte_code::ICONST:
                 // std::cout << "PUSING: "<< std::stoi(instruction.argument) << " TO STACK" << std::endl;
@@ -181,7 +179,6 @@ namespace interpreter {
         instruction.type = byte_code::METHOD;
         if (tokens.empty()) return instruction;
 
-        // std::cout << line << " : " << tokens.size() << std::endl;
         const std::string& op = tokens[0];
 
 
@@ -206,8 +203,7 @@ namespace interpreter {
         else if (op == "print") instruction.type = byte_code::PRINT;
         else if (op == "stop") instruction.type = byte_code::STOP;
         else {
-            // Handle unknown instruction or label/block identifiers
-            // std::cerr << "Unknown instruction or label: " << op << std::endl;
+            // Handle label/block identifiers
             method_line[op] = line_no;
             instruction.type = byte_code::METHOD;
             instruction.argument = op;
@@ -241,7 +237,6 @@ namespace interpreter {
             byte_code::Instruction instruction = parseInstruction(line, method_line, line_no);
             program.push_back(instruction);
 
-            // std::cout << line_no + 1 << " : " << instruction.type << line << std::endl;
             line_no++;
         }
 
@@ -250,20 +245,14 @@ namespace interpreter {
         //     std::cout << pair.first << " : " << pair.second << std::endl;
         // }
 
+        std::cout << "- Program start -" << std::endl;
         line_no = 0;
         while(program[line_no].type != byte_code::STOP) {
-            // std::cout << "EXECUTING LINE: " << line_no + 1 << std::endl;
-
-            if(program[line_no].type != byte_code::METHOD) {
-
-                machine.executeInstruction(program[line_no], line_no, method_line);
-            }
-
-            // if (machine.activationStack.size() > 0) std::cout << machine.activationStack.size() << " : " << machine.activationStack.top() << std::endl;
+            if(program[line_no].type != byte_code::METHOD) machine.executeInstruction(program[line_no], line_no, method_line);
 
             line_no++;
         }
-
+        std::cout << "-----------------" << std::endl;
 
 
         return errCodes::SUCCESS;

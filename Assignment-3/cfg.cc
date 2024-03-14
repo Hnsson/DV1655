@@ -39,8 +39,9 @@ namespace intermediate_representation {
             current_block = _main_method_block;
 
             // Tac* main_param = new Parameter(node->children.front()->value);
-            Tac* main_param = new Copy("Param", node->children.front()->value);
-            current_block->tacInstructions.push_back(main_param);
+            // Tac* main_param = new Copy("Param", node->children.front()->value);
+            Tac* main_arg = new Argument(node->children.front()->value);
+            current_block->tacInstructions.push_back(main_arg);
             for(auto i = node->children.begin(); i != node->children.end(); i++) {
                 traverseTreeIR(*i, sym_table);
             }
@@ -90,8 +91,11 @@ namespace intermediate_representation {
             for (auto i = node->children.rbegin(); i != node->children.rend(); i++) {
                 std::string param_name = traverseTreeIR(*i, sym_table);
                 // Tac* paramInstruction = new Parameter(param_name);
-                Tac* paramInstruction = new Copy("Param", param_name);
-                current_block->tacInstructions.push_back(paramInstruction);
+                // std::cout << "PARAM NAME: " << param_name << std::endl;
+                // Tac* paramInstruction = new Copy("Param", param_name);
+                Tac* argInstruction = new Argument(param_name);
+                current_block->tacInstructions.push_back(argInstruction);
+                // current_block->tacInstructions.push_back(paramInstruction);
             }
         }
         if(node->type == "MethodContent") {
@@ -182,9 +186,7 @@ namespace intermediate_representation {
             std::string continueBlockName = generateBlockId();
             BBlock* continue_block = new BBlock(continueBlockName);
 
-
             auto it = node->children.begin();
-
             std::string cond = traverseTreeIR(*it, sym_table, header_block);
             // Dont need, add this in generate
             // Tac* jumpHeader = new Jump(headerBlockName);
@@ -196,13 +198,9 @@ namespace intermediate_representation {
             header_block->condition = conditionalInstruction;
 
             std::advance(it, 1);
-            // Needed?
-            // true_block->condition = current_block->condition;
             current_block = true_block;
             traverseTreeIR(*it, sym_table);
 
-            // Dont because added in generate
-            // current_block->tacInstructions.push_back(jumpHeader);
             current_block->trueExit = header_block;
 
             header_block->trueExit = true_block;
@@ -220,23 +218,23 @@ namespace intermediate_representation {
             std::string lhsType = traverseTreeIR(node->children.front(), sym_table);
             std::string rhsType = traverseTreeIR(node->children.back(), sym_table);
 
-            // NEW ADDITION:
-            symbol_table::Variable* lhs = (symbol_table::Variable*)sym_table->findSymbol(lhsType);
-            if (lhs) {
-                if (sym_table->findSymbol(lhsType)->getType() == "NewInstance") {
-                    lhsType = lhs->getName();
-                }
-            }
+            // // NEW ADDITION:
+            // symbol_table::Variable* lhs = (symbol_table::Variable*)sym_table->findSymbol(lhsType);
+            // if (lhs) {
+            //     if (sym_table->findSymbol(lhsType)->getType() == "NewInstance") {
+            //         std::cout << "yo?" << std::endl;
+            //         lhsType = lhs->getName();
+            //     }
+            // }
 
-            symbol_table::Variable* rhs = (symbol_table::Variable*)sym_table->findSymbol(rhsType);
-            if (rhs) {
-                if (sym_table->findSymbol(rhsType)->getType() == "NewInstance") {
-                    rhsType = rhs->getName();
-                }
-            }
-            // ---
+            // symbol_table::Variable* rhs = (symbol_table::Variable*)sym_table->findSymbol(rhsType);
+            // if (rhs) {
+            //     if (sym_table->findSymbol(rhsType)->getType() == "NewInstance") {
+            //         std::cout << "yo2?" << std::endl;
+            //         rhsType = rhs->getName();
+            //     }
+            // }
 
-            // std::cout << lhsType << " := " << rhsType << std::endl;
             Tac* copyInstruction = new Copy(rhsType, lhsType);
             current_block->tacInstructions.push_back(copyInstruction);
             return lhsType;

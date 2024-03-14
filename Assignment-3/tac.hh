@@ -386,6 +386,34 @@ public:
     }
 };
 
+class Argument : public Tac {
+public:
+    Argument(std::string _result)
+        : Tac("", "", "", _result) {}
+    
+    void dump() override {
+        printf("iload %s", result.c_str());
+    }
+
+    std::string getDump() override {
+        return "iload " + result;
+    }
+
+    std::string generateCode() override {
+        byte_code::Instruction* _result = new byte_code::Instruction();
+
+
+        // Store the value into 'result'
+        _result->type = byte_code::ISTORE;
+        _result->argument = result;
+
+        // Assuming generateLine forms the correct bytecode line based on type and argument
+        std::string code = _result->generateLine();
+        delete _result; // Clean up
+        return code;  
+    }
+};
+
 class Parameter : public Tac {
 public:
     Parameter(std::string _y)

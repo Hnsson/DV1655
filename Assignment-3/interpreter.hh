@@ -13,8 +13,6 @@
 namespace stack_machine {
     class StackMachine {
         std::stack<int> dataStack;
-        // std::unordered_map<std::string, int> localVariables;
-        // std::unordered_map<std::string, int> tempVariables;
     public:
         std::stack<std::unordered_map<std::string, int>> localStack;
         std::stack<int> activationStack;

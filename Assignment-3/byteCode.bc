@@ -1,5 +1,4 @@
 A.Main:
-	iload Param
 	istore a
 	invokevirtual Bar.foo
 	istore _t0
@@ -28,7 +27,6 @@ Bar.foo:
 	ireturn
 
 Bar.foo2:
-	iload Param
 	istore p1
 	iload p1
 	iconst 2
@@ -52,11 +50,8 @@ block_1:
 
 	goto block_2
 Bar.foo3:
-	iload Param
 	istore p3
-	iload Param
 	istore p2
-	iload Param
 	istore p1
 
 	iload p3
