@@ -7,12 +7,12 @@
 #include <vector>
 
 namespace {
-    class BBlock {
+    class BBlock { // Basic Block
         public:
-            std::string name;
-            std::vector<Tac*> tacInstructions;
-            Tac* condition;
-            BBlock *trueExit, *falseExit;
+            std::string name; // Name of the block
+            std::vector<Tac*> tacInstructions; // Instructions in the block
+            Tac* condition; // Condition for the block
+            BBlock *trueExit, *falseExit; // True and False exits from the block
             BBlock(std::string name = "")
                 : name(name), trueExit(nullptr), falseExit(nullptr) {}
             ~BBlock() {
@@ -23,22 +23,21 @@ namespace {
                 delete condition;
             }
     };
-}
+} // namespace BBlock
 
 namespace intermediate_representation {
-    BBlock* current_block = nullptr;
-    std::vector<BBlock*> method_blocks;
-    std::string generateTempId();
-    std::string generateBlockId();
+    BBlock* current_block = nullptr; // Current block
+    std::vector<BBlock*> method_blocks; // Blocks for the method
+    std::string generateTempId(); // Generate a temporary id
+    std::string generateBlockId(); // Generate a block id
 
-    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* current_block, BBlock* prev_block);
+    std::string traverseTreeIR(Node* node, symbol_table::SymbolTable* sym_table, BBlock* prev_block); // Traverse the tree for IR generation
 
-    void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited);
-    errCodes generateCFG();
+    void generateCFGContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited); // Generate the CFG content
+    errCodes generateCFG(); // Generate the CFG
 
-    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited);
-    errCodes generateCode();
+    void generateCodeContent(BBlock* block, ofstream& outStream, unordered_set<BBlock*>& visited, bool print); // Generate the code content
+    errCodes generateCode(); // Generate the code
 
-    // errCodes generateCFG();
-    errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table);
-}
+    errCodes generateIR(Node* root, symbol_table::SymbolTable* sym_table); // Generate the IR
+} // namespace intermediate_representation

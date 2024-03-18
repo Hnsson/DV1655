@@ -3,64 +3,58 @@
 namespace stack_machine
 {
     void StackMachine::setVariable(const std::string& name, int value) {
-        localStack.top()[name] = value;
+        localStack.top()[name] = value; // Set the variable in the local stack
     }
     int StackMachine::getVariable(const std::string& name) {
-        if (localStack.top().find(name) != localStack.top().end()) return localStack.top()[name];
+        if (localStack.top().find(name) != localStack.top().end()) return localStack.top()[name]; // Get the variable from the local stack
 
         std::cerr << "Variable (" << name << ") not found." << std::endl;
         return 0;
     }
 
     void StackMachine::executeInstruction(const byte_code::Instruction& instruction, int& line_no, std::unordered_map<std::string, int>& method_line) {
-        int op_1, op_2, result;
+        int op_1, op_2, result; // Variables for operations
 
-        // std::cout << "\tLINE: " << line_no + 1 << std::endl;
-        switch (instruction.type) {
-            case byte_code::ILOAD:
+        switch (instruction.type) { // Execute the instruction based on the type
+            case byte_code::ILOAD: { // Load the variable to the stack
                 // Assuming you have a way to access local variables, e.g., an array or map
                 op_1 = getVariable(instruction.argument);
-                // std::cout << "PUSHING: "<< instruction.argument << " TO STACK: " << op_1 << std::endl;
-                // op_1 = localStack.top()[instruction.argument];
                 dataStack.push(op_1);
-                break;
-            case byte_code::ICONST:
-                // std::cout << "PUSING: "<< std::stoi(instruction.argument) << " TO STACK" << std::endl;
+            } break;
+            case byte_code::ICONST: // Push the constant to the stack
                 dataStack.push(std::stoi(instruction.argument));
                 break;
-            case byte_code::ISTORE:
+            case byte_code::ISTORE: { // Store the variable from the stack
                 if (!dataStack.empty()) {
-                    // std::cout << "ISTORE: " << instruction.argument << ", " << dataStack.top() << std::endl;
                     setVariable(instruction.argument, dataStack.top());
-                    // localStack.top()[std::stoi(instruction.argument)] = dataStack.top();
                     dataStack.pop();
                 }
-                break;
-            case byte_code::IADD:
+            } break;
+            case byte_code::IADD: { // Add the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     result = op_1 + op_2;
                     dataStack.push(result);
                 }
-                break;
-            case byte_code::ISUB:
+            } break;
+            case byte_code::ISUB: { // Subtract the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     result = op_1 - op_2;
                     dataStack.push(result);
                 }
-                break;
-            case byte_code::IMUL:
+            } break;
+            case byte_code::IMUL: { // Multiply the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     result = op_1 * op_2;
                     dataStack.push(result);
                 }
-                break;
-            case byte_code::IDIV:
+            } break;
+            case byte_code::IDIV: { // Divide the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
@@ -71,77 +65,74 @@ namespace stack_machine
                     result = op_1 / op_2;
                     dataStack.push(result);
                 }
-                break;
-            case byte_code::ILT:
+            } break;
+            case byte_code::ILT: { // Compare the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push(op_1 < op_2 ? 1 : 0);
                 }
-                break;
-            case byte_code::IGT:
+            } break;
+            case byte_code::IGT: { // Compare the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push(op_1 > op_2 ? 1 : 0);
                 }
-                break;
-            case byte_code::IEQ:
+            } break;
+            case byte_code::IEQ: { // Compare the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push(op_1 == op_2 ? 1 : 0);
                 }
-                break;
-            case byte_code::IAND:
+            } break;
+            case byte_code::IAND: { // Logical AND the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push((op_1 && op_2) ? 1 : 0);
                 }
-                break;
-            case byte_code::IOR: {
+            } break;
+            case byte_code::IOR: { // Logical OR the top two elements from the stack
                 if (dataStack.size() >= 2) {
                     op_2 = dataStack.top(); dataStack.pop();
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push((op_1 || op_2 ) ? 1 : 0);
                 }
             } break;
-            case byte_code::INOT: {
+            case byte_code::INOT: { // Logical NOT the top element from the stack
                 if (!dataStack.empty()) {
                     op_1 = dataStack.top(); dataStack.pop();
                     dataStack.push(!op_1);
                 }
             } break;
-            case byte_code::PRINT: {
+            case byte_code::PRINT: { // Print the top element from the stack
                 int result = dataStack.top();
                 std::cout << "Program print: " << result << std::endl;
                 dataStack.pop();
             } break;
-            case byte_code::IF_FALSE_GOTO: {
+            case byte_code::IF_FALSE_GOTO: { // Goto the line number if the top element from the stack is false
                 int condition = dataStack.top();
                 dataStack.pop();
                 if (!condition) {
-                    line_no = method_line[instruction.argument + ":"];
+                    line_no = method_line[instruction.argument + ":"]; // Goto the line number of the method
                 }
             } break;
-            case byte_code::INVOKEVIRTUAL: {
+            case byte_code::INVOKEVIRTUAL: { // Method invocation
                 activationStack.push(line_no);
                 localStack.push(std::unordered_map<std::string, int>());
-                line_no = method_line[instruction.argument + ":"];
-                // activationStack.push(method_line[instruction.argument + ":"]);
-                // Method invocation would require a separate mechanism to handle calling and returning from methods.
+                line_no = method_line[instruction.argument + ":"]; // Goto the method line number of the method
             } break;
-            case byte_code::GOTO:
-                line_no = method_line[instruction.argument + ":"];
+            case byte_code::GOTO: // Goto the line number
+                line_no = method_line[instruction.argument + ":"]; // Goto the line number of the method
                 break;
-            case byte_code::IRETURN: {
+            case byte_code::IRETURN: { // Return from the method
                 line_no = activationStack.top();
                 localStack.pop();
                 activationStack.pop();
             } break;
         }
-        // std::cout << std::endl;
     }
 } // namespace stack_machine
 
@@ -152,6 +143,7 @@ namespace interpreter {
         init(file_path);
     }
     Interpreter::~Interpreter() {
+        // Close the file stream
         if (file_stream.is_open()) {
             file_stream.close();
         }
@@ -159,26 +151,27 @@ namespace interpreter {
 
     void Interpreter::init(std::string file_path) {
         std::cout << "Initializing interpreter..." << std::endl;
-
+        // Open the file for reading
         file_stream.open(file_path);
-        if(!file_stream.is_open()) {
+        if(!file_stream.is_open()) { // Check if the file is opened successfully
             std::cerr << "Failed to open file: " << file_path << std::endl;
             return;
         }
-
+        // Print success message
         std::cout << "File: (" << file_path << ") opened for reading..." << std::endl;
     }
 
     byte_code::Instruction Interpreter::parseInstruction(std::string line, std::unordered_map<std::string, int>& method_line, int line_no) {
+        // Initialize the instruction
         byte_code::Instruction instruction;
 
         std::istringstream iss(line);
-        // Tokenizes the string into a vector of tokens
+        // Tokenizes the string into a vector of tokens using whitespace as delimiter
         std::vector<std::string> tokens{std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
         instruction.type = byte_code::METHOD;
-        if (tokens.empty()) return instruction;
-
+        if (tokens.empty()) return instruction; // Return default instruction for whitespace lines
+        // Get the operation from the first token
         const std::string& op = tokens[0];
 
 
@@ -207,12 +200,12 @@ namespace interpreter {
             method_line[op] = line_no;
             instruction.type = byte_code::METHOD;
             instruction.argument = op;
-            return instruction; // Return default instruction for now
-        }
+            return instruction; // Return default instruction but with method name as argument
+       }
 
-        if (tokens.size() > 1 && op != "iffalse") {
+        if (tokens.size() > 1 && op != "iffalse") { // If the operation has an argument (e.g., iload, istore, iconst) then set the argument
             instruction.argument = tokens[1];
-        } else if (tokens.size() > 1 && op == "iffalse") {
+        } else if (tokens.size() > 1 && op == "iffalse") { // If the operation is iffale then set the argument
             instruction.argument = tokens[2];
         }
 
@@ -220,22 +213,25 @@ namespace interpreter {
     }
 
     errCodes Interpreter::interpret() {
-        if(!file_stream.is_open()) {
+        if(!file_stream.is_open()) { // Check if the file is opened successfully
             std::cerr << "Failed to open file: " << file_path << std::endl;
             return errCodes::INTERPRETER_ERROR;
         }
-
+        // Initialize the stack machine
         stack_machine::StackMachine machine;
+        // Push an empty local stack for the first method
         machine.localStack.push(std::unordered_map<std::string, int>());
+        // Read the file line by line
         std::string line;
-
+        // Initialize the program as a vector of instructions
         std::vector<byte_code::Instruction> program;
+        // Map method names to line numbers for method invocation
         std::unordered_map<std::string, int> method_line;
 
         int line_no = 0;
         while(std::getline(file_stream, line)) {
-            byte_code::Instruction instruction = parseInstruction(line, method_line, line_no);
-            program.push_back(instruction);
+            byte_code::Instruction instruction = parseInstruction(line, method_line, line_no); // Parse the line to an instruction (the function also handles method names and line numbers for method invocation)
+            program.push_back(instruction); // Add the instruction to the program
 
             line_no++;
         }
@@ -247,14 +243,14 @@ namespace interpreter {
 
         std::cout << "- Program start -" << std::endl;
         line_no = 0;
-        while(program[line_no].type != byte_code::STOP) {
-            if(program[line_no].type != byte_code::METHOD) machine.executeInstruction(program[line_no], line_no, method_line);
+        while(program[line_no].type != byte_code::STOP) { // Execute the program until the stop instruction is reached
+            if(program[line_no].type != byte_code::METHOD) machine.executeInstruction(program[line_no], line_no, method_line); // Execute the instruction
 
             line_no++;
         }
         std::cout << "-----------------" << std::endl;
 
 
-        return errCodes::SUCCESS;
+        return errCodes::SUCCESS; // Return success
     }
 } // namespace interpreter

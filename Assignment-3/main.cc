@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 						if (errCode_4 != errCodes::SUCCESS) throw ErrorCodeException(errCodes::INTERPRETER_ERROR, "INTERPRETER");
 						printStatus("INTERPRETER SUCCEEDED", true);
 					} else {
-						std::cout << "For running interpreter: run with the flag '-it' at the end" << std::endl;
+						std::cout << "To run the interpreter, use the '-it' flag at the end." << std::endl;
 					}
 				}
 				catch (ErrorCodeException& e) {

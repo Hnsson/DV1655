@@ -570,16 +570,16 @@ namespace semantic_analysis {
 
     errCodes semantic_analysis(Node* node, symbol_table::SymbolTable* sym_table) {
         try {
-            // [ ] Verify that all identifiers are declared
-            // [ ] Type checking
-            // [ ] Expressions: e.g., In a + b; both a and b should be integers
-            // [ ] Statemetns: e.g., In a = b; type of a and b should be the same
-            // [ ] Methods: In int a(int c) ... return b; the type of return
+            // [X] Verify that all identifiers are declared
+            // [X] Type checking
+            // [X] Expressions: e.g., In a + b; both a and b should be integers
+            // [X] Statemetns: e.g., In a = b; type of a and b should be the same
+            // [X] Methods: In int a(int c) ... return b; the type of return
             //              expression (b) should be the same as type of the method declaration (int).
-            // [ ] Method calls: In a(x); the type of x and c should be the same
-            // [ ] Array access: In b[a]; b.length the type of a must be integer; the type of b must
+            // [X] Method calls: In a(x); the type of x and c should be the same
+            // [X] Array access: In b[a]; b.length the type of a must be integer; the type of b must
             //                   be int[];
-            // [ ] Out of scope: Inheritance, polymorphic calls, and other OO features
+            // [X] Out of scope: Inheritance, polymorphic calls, and other OO features
             sym_table->resetTable();
             bool errorsEncountered = false;
             traverseTreeSemantically(node, sym_table, errorsEncountered);

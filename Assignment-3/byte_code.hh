@@ -4,7 +4,7 @@
 #include <string>
 
 namespace byte_code {
-    enum InstructionType {
+    enum InstructionType { // Instruction types
         GOTO,
         ILOAD,
         ICONST,
@@ -27,14 +27,14 @@ namespace byte_code {
         METHOD
     };
 
-    bool is_number(const std::string& str);
+    bool is_number(const std::string& str); // Check if the string is a number
 
-    class Instruction {
+    class Instruction { // Instruction class
     public:
-        InstructionType type;
-        std::string argument;
+        InstructionType type; // Type of instruction
+        std::string argument; // Argument of instruction
 
-        std::string generateLine() {
+        std::string generateLine() { // Generate the instruction line for the byte code based on the type
             switch (type) {
                 case GOTO:
                     return "goto " + argument;
